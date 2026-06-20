@@ -7,9 +7,10 @@ import (
 	"log"
 	"os"
 
-	bp "github.com/terapps/gonveyor-examples/blueprint"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
 	"github.com/terapps/gonveyor-examples/internal/infra"
+	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
+	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	"github.com/terapps/gonveyor/ledger"
 )
 
@@ -68,14 +69,14 @@ func main() {
 		userID := fs.String("user-id", "user-1", "user ID")
 		email := fs.String("email", "user@example.com", "email address")
 		_ = fs.Parse(args)
-		manifest, err = bp.SimpleManifest(*userID, *email)
+		manifest, err = sbp.Manifest(*userID, *email)
 
 	case "transcoding":
 		fs := flag.NewFlagSet("transcoding", flag.ExitOnError)
 		assetID := fs.String("asset-id", "asset-1", "asset ID")
 		sourceURL := fs.String("source-url", "s3://bucket/video.mp4", "source URL")
 		_ = fs.Parse(args)
-		manifest, err = bp.TranscodingManifest(*assetID, *sourceURL)
+		manifest, err = tbp.Manifest(*assetID, *sourceURL)
 
 	case "quote-lifecycle":
 		fs := flag.NewFlagSet("quote-lifecycle", flag.ExitOnError)

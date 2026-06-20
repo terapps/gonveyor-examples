@@ -7,12 +7,17 @@ import (
 	"os"
 
 	"github.com/terapps/gonveyor"
-	bp "github.com/terapps/gonveyor-examples/blueprint"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
 	clh "github.com/terapps/gonveyor-examples/contract-lifecycle/handler"
 	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor-examples/handler"
 	"github.com/terapps/gonveyor-examples/internal/infra"
+	sh "github.com/terapps/gonveyor-examples/simple/handler"
+	sst "github.com/terapps/gonveyor-examples/simple/stations"
+	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
+	th "github.com/terapps/gonveyor-examples/transcoding/handler"
+	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
+
+	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
 )
 
 func main() {
@@ -25,16 +30,16 @@ func main() {
 	defer cleanup()
 
 	// simple
-	g.RegisterBlueprint(bp.SimpleDispatch)
-	g.RegisterHandler(bp.SendWelcome, gonveyor.Handle(bp.SendWelcome, handler.SendWelcome))
+	g.RegisterBlueprint(sbp.SimpleDispatch)
+	g.RegisterHandler(sst.SendWelcome, gonveyor.Handle(sst.SendWelcome, sh.SendWelcome))
 
 	// transcoding
-	g.RegisterBlueprint(bp.Transcoding)
-	g.RegisterHandler(bp.Download, gonveyor.Handle(bp.Download, handler.Download))
-	g.RegisterHandler(bp.Transcode, gonveyor.Handle(bp.Transcode, handler.Transcode))
-	g.RegisterHandler(bp.Thumbnail, gonveyor.Handle(bp.Thumbnail, handler.Thumbnail))
-	g.RegisterHandler(bp.ExtractAudio, gonveyor.Handle(bp.ExtractAudio, handler.ExtractAudio))
-	g.RegisterHandler(bp.Package, gonveyor.Handle(bp.Package, handler.Package))
+	g.RegisterBlueprint(tbp.Transcoding)
+	g.RegisterHandler(tst.Download, gonveyor.Handle(tst.Download, th.Download))
+	g.RegisterHandler(tst.Transcode, gonveyor.Handle(tst.Transcode, th.Transcode))
+	g.RegisterHandler(tst.Thumbnail, gonveyor.Handle(tst.Thumbnail, th.Thumbnail))
+	g.RegisterHandler(tst.ExtractAudio, gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio))
+	g.RegisterHandler(tst.Package, gonveyor.Handle(tst.Package, th.Package))
 
 	// contract lifecycle — shared handlers registered on both phase-1 and phase-2 stations
 	g.RegisterBlueprint(clbp.QuoteLifecycle)
