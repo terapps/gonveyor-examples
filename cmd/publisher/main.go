@@ -8,6 +8,7 @@ import (
 	"os"
 
 	bp "github.com/terapps/gonveyor-examples/blueprint"
+	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
 	"github.com/terapps/gonveyor-examples/internal/infra"
 	"github.com/terapps/gonveyor/ledger"
 )
@@ -15,27 +16,27 @@ import (
 const usage = `usage: publisher <command> [flags]
 
 commands:
-  simple       submit a simple welcome dispatch
-  transcoding  submit a video transcoding workflow
-  contract     submit a contract creation workflow
-  signal       send a signal to an existing blueprint
+  simple          submit a simple welcome dispatch
+  transcoding     submit a video transcoding workflow
+  quote-lifecycle submit a full quote → contract lifecycle workflow
+  signal          send a signal to an existing blueprint
 
 flags:
   simple:
-    -user-id   string  user ID
-    -email     string  email address
+    -user-id   string  user ID (default: user-1)
+    -email     string  email address (default: user@example.com)
 
   transcoding:
-    -asset-id   string  asset ID
-    -source-url string  source URL
+    -asset-id   string  asset ID (default: asset-1)
+    -source-url string  source URL (default: s3://bucket/video.mp4)
 
-  contract:
-    -client-id     string  client ID
-    -contract-ref  string  contract reference
+  quote-lifecycle:
+    -quote-id    string  quote ID (default: quote-1)
+    -email       string  client email (default: client@example.com)
 
   signal:
-    -blueprint-id  string  blueprint instance ID
-    -key           string  signal key (e.g. await_payment)
+    -blueprint-id  string  blueprint instance ID (required)
+    -key           string  signal key, e.g. await_signature (required)
     -payload       string  JSON payload (default: {})
 `
 
@@ -60,6 +61,7 @@ func main() {
 	defer cleanup()
 
 	var manifest ledger.BlueprintManifest
+
 	switch cmd {
 	case "simple":
 		fs := flag.NewFlagSet("simple", flag.ExitOnError)
@@ -75,16 +77,22 @@ func main() {
 		_ = fs.Parse(args)
 		manifest, err = bp.TranscodingManifest(*assetID, *sourceURL)
 
-	case "contract":
-		fs := flag.NewFlagSet("contract", flag.ExitOnError)
-		clientID := fs.String("client-id", "client-1", "client ID")
-		contractRef := fs.String("contract-ref", "ref-001", "contract reference")
+	case "quote-lifecycle":
+		fs := flag.NewFlagSet("quote-lifecycle", flag.ExitOnError)
+		quoteID := fs.String("quote-id", "quote-1", "quote ID")
+		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
-		manifest, err = bp.ContractManifest(*clientID, *contractRef)
+		manifest, err = clbp.Manifest(clbp.Params{
+			QuoteID:          *quoteID,
+			ClientEmail:      *email,
+			QuoteDocTypes:    []string{"proposal", "pricing", "terms"},
+			ContractDocTypes: []string{"contract", "annex_a"},
+		})
 
 	default:
 		log.Fatalf("unknown command %q\n\n%s", cmd, usage)
 	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +106,7 @@ func main() {
 func runSignal(ctx context.Context, args []string) {
 	fs := flag.NewFlagSet("signal", flag.ExitOnError)
 	blueprintID := fs.String("blueprint-id", "", "blueprint instance ID (required)")
-	key := fs.String("key", "", "signal key, e.g. await_payment (required)")
+	key := fs.String("key", "", "signal key (required)")
 	payloadStr := fs.String("payload", "{}", "JSON payload")
 	_ = fs.Parse(args)
 

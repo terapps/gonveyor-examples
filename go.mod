@@ -25,5 +25,4 @@ require (
 	mellium.im/sasl v0.3.2 // indirect
 )
 
-// For local development against an unpublished gonveyor:
-// go mod edit -replace github.com/terapps/gonveyor=../gonveyor
+replace github.com/terapps/gonveyor => ../gonveyor
