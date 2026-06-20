@@ -25,4 +25,4 @@ require (
 	mellium.im/sasl v0.3.2 // indirect
 )
 
-replace github.com/terapps/gonveyor => ../gonveyor
+replace github.com/terapps/gonveyor => ../
