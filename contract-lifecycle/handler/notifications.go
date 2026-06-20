@@ -2,17 +2,54 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"strings"
 
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 )
 
-func SendQuoteEmail(_ context.Context, in st.SendQuoteEmailInput) (st.SendQuoteEmailOutput, error) {
-	slog.Info("sending quote email", "to", in.ClientEmail, "signature_url", in.SignatureURL)
-	return st.SendQuoteEmailOutput{}, nil
+type emailTemplate struct {
+	subject string
+	body    string // Go template syntax, vars interpolated manually
 }
 
-func SendContractEmail(_ context.Context, in st.SendContractEmailInput) (st.SendContractEmailOutput, error) {
-	slog.Info("sending contract email", "to", in.ClientEmail, "docs", len(in.DocURLs))
-	return st.SendContractEmailOutput{}, nil
+var templates = map[st.EmailTemplate]emailTemplate{
+	st.TemplateSignatureRequest: {
+		subject: "Votre devis est prêt à signer",
+		body:    "Bonjour,\n\nVeuillez signer votre devis en cliquant sur le lien suivant :\n{signature_url}\n\nCordialement",
+	},
+	st.TemplateContractSigned: {
+		subject: "Votre contrat est disponible",
+		body:    "Bonjour,\n\nVotre contrat a été finalisé. Vous trouverez vos documents ci-joints :\n{doc_urls}\n\nCordialement",
+	},
+}
+
+func SendEmail(_ context.Context, in st.SendEmailInput) (st.SendEmailOutput, error) {
+	tmpl, ok := templates[in.Template]
+	if !ok {
+		return st.SendEmailOutput{}, fmt.Errorf("unknown email template %q", in.Template)
+	}
+
+	vars := in.Vars
+	if vars == nil {
+		vars = map[string]string{}
+	}
+	if len(in.DocURLs) > 0 {
+		vars["doc_urls"] = strings.Join(in.DocURLs, "\n")
+	}
+
+	body := tmpl.body
+	for k, v := range vars {
+		body = strings.ReplaceAll(body, "{"+k+"}", v)
+	}
+
+	slog.Info("sending email",
+		"to", in.To,
+		"template", in.Template,
+		"subject", tmpl.subject,
+	)
+	slog.Debug("email body", "body", body)
+
+	return st.SendEmailOutput{}, nil
 }

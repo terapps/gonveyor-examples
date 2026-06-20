@@ -20,12 +20,12 @@ import (
 )
 
 var QuoteLifecycle = bp.New("quote_lifecycle",
-	st.GenerateQuoteDoc, // root — dispatched via SplitWith at manifest time
+	st.GenerateQuoteDoc, // root — dispatched via Seeds at manifest time
 	st.AwaitSignature,   // root signal — held until signature webhook
 	st.AwaitPayment,     // root signal — held until payment webhook
 
 	bp.Wire(st.InitiateSignature,
-		gonveyor.Merge(st.GenerateQuoteDoc, func(outs []st.GenerateQuoteDocOutput, in *st.InitiateSignatureInput) {
+		gonveyor.Merge(st.GenerateQuoteDoc, func(outs []st.DocumentOutput, in *st.InitiateSignatureInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
 				in.DocURLs[i] = o.DocURL
@@ -34,14 +34,14 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 	),
 
 	bp.Wire(st.SendQuoteEmail,
-		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SendQuoteEmailInput) {
-			in.SignatureURL = o.SignatureURL
+		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SendEmailInput) {
+			in.Vars = map[string]string{"signature_url": o.SignatureURL}
 		}),
 	),
 
 	bp.Wire(st.SyncCrmQuote,
-		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SyncCrmQuoteInput) {
-			in.ProcessID = o.ProcessID
+		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SyncCrmInput) {
+			in.Metadata = map[string]string{"process_id": o.ProcessID}
 		}),
 	),
 
@@ -59,16 +59,16 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 	),
 
 	bp.Wire(st.GenerateContractDoc,
-		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.GenerateContractDocInput) {
-			in.ContractID = o.ContractID
+		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.DocumentInput) {
+			in.EntityID = o.ContractID
 		}),
 	),
 
 	bp.Wire(st.SendContractEmail,
-		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.SendContractEmailInput) {
-			in.ClientEmail = o.ClientEmail
+		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.SendEmailInput) {
+			in.To = o.ClientEmail
 		}),
-		gonveyor.Merge(st.GenerateContractDoc, func(outs []st.GenerateContractDocOutput, in *st.SendContractEmailInput) {
+		gonveyor.Merge(st.GenerateContractDoc, func(outs []st.DocumentOutput, in *st.SendEmailInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
 				in.DocURLs[i] = o.DocURL
@@ -77,10 +77,10 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 	),
 
 	bp.Wire(st.SyncCrmContract,
-		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.SyncCrmContractInput) {
-			in.ContractID = o.ContractID
+		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.SyncCrmInput) {
+			in.EntityID = o.ContractID
 		}),
-		gonveyor.Merge(st.GenerateContractDoc, func(outs []st.GenerateContractDocOutput, in *st.SyncCrmContractInput) {
+		gonveyor.Merge(st.GenerateContractDoc, func(outs []st.DocumentOutput, in *st.SyncCrmInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
 				in.DocURLs[i] = o.DocURL
@@ -93,27 +93,41 @@ type Params struct {
 	QuoteID          string
 	ClientEmail      string
 	QuoteDocTypes    []string // e.g. ["proposal", "pricing", "terms"]
-	ContractDocTypes []string // e.g. ["contract", "annex_a", "annex_b"]
+	ContractDocTypes []string // e.g. ["contract", "annex_a"]
 }
 
 func Manifest(p Params) (ledger.BlueprintManifest, error) {
 	return QuoteLifecycle.Manifest(
 		// N quote documents dispatched in parallel
-		gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.GenerateQuoteDocInput) {
-			in.QuoteID = p.QuoteID
-			in.ClientEmail = p.ClientEmail
+		gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.DocumentInput) {
+			in.EntityID = p.QuoteID
 			in.DocType = docType
 		}),
-		// Ambient context threaded to nodes whose inputs aren't fully covered by Intake/Merge
+		// Ambient context seeded into downstream nodes
 		gonveyor.Seed(st.InitiateSignature, st.InitiateSignatureInput{
 			QuoteID:     p.QuoteID,
 			ClientEmail: p.ClientEmail,
 		}),
-		gonveyor.Seed(st.SyncCrmQuote, st.SyncCrmQuoteInput{QuoteID: p.QuoteID}),
-		gonveyor.Seed(st.CreateContract, st.CreateContractInput{QuoteID: p.QuoteID}),
-		gonveyor.Seed(st.SendContractEmail, st.SendContractEmailInput{ClientEmail: p.ClientEmail}),
+		gonveyor.Seed(st.SyncCrmQuote, st.SyncCrmInput{
+			EntityType: "quote",
+			EntityID:   p.QuoteID,
+		}),
+		gonveyor.Seed(st.SendQuoteEmail, st.SendEmailInput{
+			To:       p.ClientEmail,
+			Template: st.TemplateSignatureRequest,
+		}),
+		gonveyor.Seed(st.CreateContract, st.CreateContractInput{
+			QuoteID:     p.QuoteID,
+			ClientEmail: p.ClientEmail,
+		}),
+		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+			Template: st.TemplateContractSigned,
+		}),
+		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
+			EntityType: "contract",
+		}),
 		// N contract documents dispatched in parallel after CreateContract
-		gonveyor.Seeds(st.GenerateContractDoc, p.ContractDocTypes, func(docType string, in *st.GenerateContractDocInput) {
+		gonveyor.Seeds(st.GenerateContractDoc, p.ContractDocTypes, func(docType string, in *st.DocumentInput) {
 			in.DocType = docType
 		}),
 	)

@@ -8,18 +8,10 @@ import (
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 )
 
-func GenerateQuoteDoc(_ context.Context, in st.GenerateQuoteDocInput) (st.GenerateQuoteDocOutput, error) {
-	slog.Info("generating quote document", "quote_id", in.QuoteID, "doc_type", in.DocType)
-	return st.GenerateQuoteDocOutput{
-		DocURL:  fmt.Sprintf("storage://quotes/%s/%s.pdf", in.QuoteID, in.DocType),
-		DocType: in.DocType,
-	}, nil
-}
-
-func GenerateContractDoc(_ context.Context, in st.GenerateContractDocInput) (st.GenerateContractDocOutput, error) {
-	slog.Info("generating contract document", "contract_id", in.ContractID, "doc_type", in.DocType)
-	return st.GenerateContractDocOutput{
-		DocURL:  fmt.Sprintf("storage://contracts/%s/%s.pdf", in.ContractID, in.DocType),
+func GenerateDocument(_ context.Context, in st.DocumentInput) (st.DocumentOutput, error) {
+	slog.Info("generating document", "entity_id", in.EntityID, "doc_type", in.DocType)
+	return st.DocumentOutput{
+		DocURL:  fmt.Sprintf("storage://%s/%s.pdf", in.EntityID, in.DocType),
 		DocType: in.DocType,
 	}, nil
 }
