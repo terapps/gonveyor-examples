@@ -9,8 +9,9 @@ type DocumentInput struct {
 	DocType  string // e.g. "proposal", "pricing", "contract", "annex_a"
 }
 type DocumentOutput struct {
-	DocURL  string
-	DocType string
+	DocURL   string
+	DocType  string
+	EntityID string
 }
 
 type EmailTemplate string
@@ -48,6 +49,17 @@ type InitiateSignatureOutput struct {
 	SignatureURL string
 }
 
+type InitiatePaymentInput struct {
+	QuoteID     string
+	ClientEmail string
+	Amount      float64
+	DocURLs     []string
+}
+type InitiatePaymentOutput struct {
+	ProcessID  string
+	PaymentURL string
+}
+
 // --- Signals ---
 
 type SignaturePayload struct {
@@ -75,17 +87,30 @@ type CreateContractOutput struct {
 	ClientEmail string
 }
 
+type BundleContractDocsInput struct {
+	ContractID  string
+	ClientEmail string
+	DocURLs     []string
+}
+type BundleContractDocsOutput struct {
+	ContractID  string
+	ClientEmail string
+	DocURLs     []string
+}
+
 // --- Station definitions ---
 
 // GenerateQuoteDoc and GenerateContractDoc share DocumentInput/Output and the same handler.
 // They are distinct stations because a node key must be unique within a blueprint.
 var GenerateQuoteDoc    = blueprint.Define[DocumentInput, DocumentOutput]("generate_quote_doc")
 var InitiateSignature   = blueprint.Define[InitiateSignatureInput, InitiateSignatureOutput]("initiate_signature")
+var InitiatePayment     = blueprint.Define[InitiatePaymentInput, InitiatePaymentOutput]("initiate_payment")
 var SendQuoteEmail      = blueprint.Define[SendEmailInput, SendEmailOutput]("send_quote_email")
 var SyncCrmQuote        = blueprint.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_quote")
 var AwaitSignature      = blueprint.Signal[SignaturePayload]("await_signature")
 var AwaitPayment        = blueprint.Signal[PaymentPayload]("await_payment")
 var CreateContract      = blueprint.Define[CreateContractInput, CreateContractOutput]("create_contract")
-var GenerateContractDoc = blueprint.Define[DocumentInput, DocumentOutput]("generate_contract_doc")
+var GenerateContractDoc  = blueprint.Define[DocumentInput, DocumentOutput]("generate_contract_doc")
+var BundleContractDocs  = blueprint.Define[BundleContractDocsInput, BundleContractDocsOutput]("bundle_contract_docs")
 var SendContractEmail   = blueprint.Define[SendEmailInput, SendEmailOutput]("send_contract_email")
 var SyncCrmContract     = blueprint.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_contract")

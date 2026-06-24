@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"os"
 
+	"github.com/rabbitmq/amqp091-go"
 	"github.com/terapps/gonveyor"
+	evamqp "github.com/terapps/gonveyor/events/amqp"
 	bunledger "github.com/terapps/gonveyor/ledger/bun"
 	"github.com/terapps/gonveyor/transport/amqp"
 	"github.com/uptrace/bun"
@@ -16,6 +18,7 @@ const (
 	defaultAMQPURL     = "amqp://gonveyor:gonveyor@localhost:5672/"
 	defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"
 	QueueName          = "gonveyor"
+	EventsExchange     = "gonveyor.events"
 )
 
 func defaultQueue() (*amqp.Queue, error) {
@@ -36,6 +39,13 @@ func BuildWorker() (*gonveyor.Gonveyor, func(), error) {
 		return nil, nil, err
 	}
 
+	worker, err := conn.NewWorker(queue)
+	if err != nil {
+		_ = conn.Close()
+		_ = db.Close()
+		return nil, nil, err
+	}
+
 	dispatcher, err := conn.NewDispatcher(queue)
 	if err != nil {
 		_ = conn.Close()
@@ -43,8 +53,9 @@ func BuildWorker() (*gonveyor.Gonveyor, func(), error) {
 		return nil, nil, err
 	}
 
-	worker, err := conn.NewWorker(queue)
+	pub, rawConn, err := buildEventPublisher()
 	if err != nil {
+		_ = worker.Close()
 		_ = dispatcher.Close()
 		_ = conn.Close()
 		_ = db.Close()
@@ -52,13 +63,16 @@ func BuildWorker() (*gonveyor.Gonveyor, func(), error) {
 	}
 
 	cleanup := func() {
+		_ = pub.Close()
+		_ = rawConn.Close()
 		_ = worker.Close()
 		_ = dispatcher.Close()
 		_ = conn.Close()
 		_ = db.Close()
 	}
 
-	return gonveyor.NewGonveyor(bunledger.New(db), dispatcher, worker), cleanup, nil
+	g := gonveyor.NewGonveyor(bunledger.New(db), dispatcher, worker, gonveyor.WithEventPublisher(pub))
+	return g, cleanup, nil
 }
 
 func BuildGonductor() (*gonveyor.Gonductor, func(), error) {
@@ -82,13 +96,37 @@ func BuildGonductor() (*gonveyor.Gonductor, func(), error) {
 		return nil, nil, err
 	}
 
+	pub, rawConn, err := buildEventPublisher()
+	if err != nil {
+		_ = dispatcher.Close()
+		_ = conn.Close()
+		_ = db.Close()
+		return nil, nil, err
+	}
+
 	cleanup := func() {
+		_ = pub.Close()
+		_ = rawConn.Close()
 		_ = dispatcher.Close()
 		_ = conn.Close()
 		_ = db.Close()
 	}
 
-	return gonveyor.NewGonductor(bunledger.New(db), dispatcher), cleanup, nil
+	gc := gonveyor.NewGonductor(bunledger.New(db), dispatcher, gonveyor.WithEventPublisher(pub))
+	return gc, cleanup, nil
+}
+
+func buildEventPublisher() (*evamqp.Publisher, *amqp091.Connection, error) {
+	rawConn, err := amqp091.Dial(envOr("AMQP_URL", defaultAMQPURL))
+	if err != nil {
+		return nil, nil, err
+	}
+	pub, err := evamqp.New(rawConn, EventsExchange)
+	if err != nil {
+		_ = rawConn.Close()
+		return nil, nil, err
+	}
+	return pub, rawConn, nil
 }
 
 func openDB() *bun.DB {
