@@ -15,22 +15,21 @@ package blueprint
 
 import (
 	"github.com/terapps/gonveyor"
-	bp "github.com/terapps/gonveyor/blueprint"
 	"github.com/terapps/gonveyor/ledger"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 )
 
-var QuoteLifecycle = bp.New("quote_lifecycle",
+var QuoteLifecycle = gonveyor.New("quote_lifecycle",
 	st.GenerateQuoteDoc, // root — dispatched via Seeds at manifest time
-	bp.Wire(st.AwaitSignature,
+	gonveyor.Wire(st.AwaitSignature,
 		gonveyor.After[struct{}](st.InitiateSignature),
 	),
 
-	bp.Wire(st.AwaitPayment,
+	gonveyor.Wire(st.AwaitPayment,
 		gonveyor.After[struct{}](st.InitiatePayment),
 	),
 
-	bp.Wire(st.InitiateSignature,
+	gonveyor.Wire(st.InitiateSignature,
 		gonveyor.Merge(st.GenerateQuoteDoc, func(outs []st.DocumentOutput, in *st.InitiateSignatureInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
@@ -39,7 +38,7 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 		}),
 	),
 
-	bp.Wire(st.InitiatePayment,
+	gonveyor.Wire(st.InitiatePayment,
 		gonveyor.Merge(st.GenerateQuoteDoc, func(outs []st.DocumentOutput, in *st.InitiatePaymentInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
@@ -48,20 +47,20 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 		}),
 	),
 
-	bp.Wire(st.SendQuoteEmail,
+	gonveyor.Wire(st.SendQuoteEmail,
 		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SendEmailInput) {
 			in.Vars = map[string]string{"signature_url": o.SignatureURL}
 		}),
 	),
 
-	bp.Wire(st.SyncCrmQuote,
+	gonveyor.Wire(st.SyncCrmQuote,
 		gonveyor.Intake(st.InitiateSignature, func(o st.InitiateSignatureOutput, in *st.SyncCrmInput) {
 			in.Metadata = map[string]string{"process_id": o.ProcessID}
 		}),
 	),
 
 	// CreateContract waits for: email sent + crm synced + signature received + payment received
-	bp.Wire(st.CreateContract,
+	gonveyor.Wire(st.CreateContract,
 		gonveyor.After[st.CreateContractInput](st.SendQuoteEmail),
 		gonveyor.After[st.CreateContractInput](st.SyncCrmQuote),
 		gonveyor.Intake(st.AwaitSignature, func(p st.SignaturePayload, in *st.CreateContractInput) {
@@ -73,13 +72,13 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 		}),
 	),
 
-	bp.Wire(st.GenerateContractDoc,
+	gonveyor.Wire(st.GenerateContractDoc,
 		gonveyor.Intake(st.CreateContract, func(o st.CreateContractOutput, in *st.DocumentInput) {
 			in.EntityID = o.ContractID
 		}),
 	),
 
-	bp.Wire(st.BundleContractDocs,
+	gonveyor.Wire(st.BundleContractDocs,
 		gonveyor.Merge(st.GenerateContractDoc, func(outs []st.DocumentOutput, in *st.BundleContractDocsInput) {
 			in.DocURLs = make([]string, len(outs))
 			for i, o := range outs {
@@ -91,14 +90,14 @@ var QuoteLifecycle = bp.New("quote_lifecycle",
 		}),
 	),
 
-	bp.Wire(st.SendContractEmail,
+	gonveyor.Wire(st.SendContractEmail,
 		gonveyor.Intake(st.BundleContractDocs, func(o st.BundleContractDocsOutput, in *st.SendEmailInput) {
 			in.To      = o.ClientEmail
 			in.DocURLs = o.DocURLs
 		}),
 	),
 
-	bp.Wire(st.SyncCrmContract,
+	gonveyor.Wire(st.SyncCrmContract,
 		gonveyor.Intake(st.BundleContractDocs, func(o st.BundleContractDocsOutput, in *st.SyncCrmInput) {
 			in.EntityID = o.ContractID
 			in.DocURLs  = o.DocURLs

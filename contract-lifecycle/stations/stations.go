@@ -1,6 +1,6 @@
 package stations
 
-import "github.com/terapps/gonveyor/blueprint"
+import "github.com/terapps/gonveyor"
 
 // --- Shared types ---
 
@@ -102,15 +102,15 @@ type BundleContractDocsOutput struct {
 
 // GenerateQuoteDoc and GenerateContractDoc share DocumentInput/Output and the same handler.
 // They are distinct stations because a node key must be unique within a blueprint.
-var GenerateQuoteDoc    = blueprint.Define[DocumentInput, DocumentOutput]("generate_quote_doc")
-var InitiateSignature   = blueprint.Define[InitiateSignatureInput, InitiateSignatureOutput]("initiate_signature")
-var InitiatePayment     = blueprint.Define[InitiatePaymentInput, InitiatePaymentOutput]("initiate_payment")
-var SendQuoteEmail      = blueprint.Define[SendEmailInput, SendEmailOutput]("send_quote_email")
-var SyncCrmQuote        = blueprint.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_quote")
-var AwaitSignature      = blueprint.Signal[SignaturePayload]("await_signature")
-var AwaitPayment        = blueprint.Signal[PaymentPayload]("await_payment")
-var CreateContract      = blueprint.Define[CreateContractInput, CreateContractOutput]("create_contract")
-var GenerateContractDoc  = blueprint.Define[DocumentInput, DocumentOutput]("generate_contract_doc")
-var BundleContractDocs  = blueprint.Define[BundleContractDocsInput, BundleContractDocsOutput]("bundle_contract_docs")
-var SendContractEmail   = blueprint.Define[SendEmailInput, SendEmailOutput]("send_contract_email")
-var SyncCrmContract     = blueprint.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_contract")
+var GenerateQuoteDoc    = gonveyor.Define[DocumentInput, DocumentOutput]("generate_quote_doc", gonveyor.WithRoute("tasks.document"))
+var InitiateSignature   = gonveyor.Define[InitiateSignatureInput, InitiateSignatureOutput]("initiate_signature")
+var InitiatePayment     = gonveyor.Define[InitiatePaymentInput, InitiatePaymentOutput]("initiate_payment")
+var SendQuoteEmail      = gonveyor.Define[SendEmailInput, SendEmailOutput]("send_quote_email")
+var SyncCrmQuote        = gonveyor.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_quote")
+var AwaitSignature      = gonveyor.Signal[SignaturePayload]("await_signature")
+var AwaitPayment        = gonveyor.Signal[PaymentPayload]("await_payment")
+var CreateContract      = gonveyor.Define[CreateContractInput, CreateContractOutput]("create_contract")
+var GenerateContractDoc  = gonveyor.Define[DocumentInput, DocumentOutput]("generate_contract_doc", gonveyor.WithRoute("tasks.document"))
+var BundleContractDocs  = gonveyor.Define[BundleContractDocsInput, BundleContractDocsOutput]("bundle_contract_docs")
+var SendContractEmail   = gonveyor.Define[SendEmailInput, SendEmailOutput]("send_contract_email")
+var SyncCrmContract     = gonveyor.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_contract")

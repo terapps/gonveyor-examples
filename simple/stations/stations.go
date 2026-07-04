@@ -1,6 +1,6 @@
 package stations
 
-import "github.com/terapps/gonveyor/blueprint"
+import "github.com/terapps/gonveyor"
 
 type WelcomeInput struct {
 	UserID string
@@ -11,4 +11,4 @@ type WelcomeOutput struct {
 	SentAt string
 }
 
-var SendWelcome = blueprint.Define[WelcomeInput, WelcomeOutput]("send_welcome")
+var SendWelcome = gonveyor.Define[WelcomeInput, WelcomeOutput]("send_welcome")

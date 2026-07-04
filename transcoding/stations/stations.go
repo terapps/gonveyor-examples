@@ -1,6 +1,6 @@
 package stations
 
-import "github.com/terapps/gonveyor/blueprint"
+import "github.com/terapps/gonveyor"
 
 type DownloadInput struct {
 	AssetID   string
@@ -45,8 +45,8 @@ type PackageOutput struct {
 	BundleURL string
 }
 
-var Download     = blueprint.Define[DownloadInput, DownloadOutput]("download")
-var Transcode    = blueprint.Define[TranscodeInput, TranscodeOutput]("transcode")
-var Thumbnail    = blueprint.Define[ThumbnailInput, ThumbnailOutput]("thumbnail")
-var ExtractAudio = blueprint.Define[ExtractAudioInput, ExtractAudioOutput]("extract_audio")
-var Package      = blueprint.Define[PackageInput, PackageOutput]("package")
+var Download     = gonveyor.Define[DownloadInput, DownloadOutput]("download")
+var Transcode    = gonveyor.Define[TranscodeInput, TranscodeOutput]("transcode")
+var Thumbnail    = gonveyor.Define[ThumbnailInput, ThumbnailOutput]("thumbnail")
+var ExtractAudio = gonveyor.Define[ExtractAudioInput, ExtractAudioOutput]("extract_audio")
+var Package      = gonveyor.Define[PackageInput, PackageOutput]("package")

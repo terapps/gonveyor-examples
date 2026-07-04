@@ -2,7 +2,6 @@ package blueprint
 
 import (
 	"github.com/terapps/gonveyor"
-	bp "github.com/terapps/gonveyor/blueprint"
 	"github.com/terapps/gonveyor/ledger"
 	st "github.com/terapps/gonveyor-examples/transcoding/stations"
 )
@@ -12,27 +11,27 @@ import (
 //	                  ┌──> transcode    ──┐
 //	download ─────────┼──> thumbnail    ──┼──> package
 //	                  └──> extract_audio──┘
-var Transcoding = bp.New("transcoding",
+var Transcoding = gonveyor.New("transcoding",
 	st.Download,
-	bp.Wire(st.Transcode,
+	gonveyor.Wire(st.Transcode,
 		gonveyor.Intake(st.Download, func(o st.DownloadOutput, in *st.TranscodeInput) {
 			in.AssetID = o.AssetID
 			in.LocalURL = o.LocalURL
 		}),
 	),
-	bp.Wire(st.Thumbnail,
+	gonveyor.Wire(st.Thumbnail,
 		gonveyor.Intake(st.Download, func(o st.DownloadOutput, in *st.ThumbnailInput) {
 			in.AssetID = o.AssetID
 			in.LocalURL = o.LocalURL
 		}),
 	),
-	bp.Wire(st.ExtractAudio,
+	gonveyor.Wire(st.ExtractAudio,
 		gonveyor.Intake(st.Download, func(o st.DownloadOutput, in *st.ExtractAudioInput) {
 			in.AssetID = o.AssetID
 			in.LocalURL = o.LocalURL
 		}),
 	),
-	bp.Wire(st.Package,
+	gonveyor.Wire(st.Package,
 		gonveyor.Intake(st.Transcode, func(o st.TranscodeOutput, in *st.PackageInput) {
 			in.VideoURL = o.VideoURL
 		}),
