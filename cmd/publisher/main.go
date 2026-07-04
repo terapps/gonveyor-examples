@@ -41,10 +41,11 @@ func envOr(key, fallback string) string {
 const usage = `usage: publisher <command> [flags]
 
 commands:
-  simple          submit a simple welcome dispatch
-  transcoding     submit a video transcoding workflow
-  quote-lifecycle submit a full quote → contract lifecycle workflow
-  signal          send a signal to an existing blueprint
+  simple            submit a simple welcome dispatch
+  transcoding       submit a video transcoding workflow
+  quote-lifecycle   submit a full quote → contract lifecycle workflow
+  contract-renewal  submit a standalone contract renewal reminder
+  signal            send a signal to an existing blueprint
 
 flags:
   simple:
@@ -57,6 +58,10 @@ flags:
 
   quote-lifecycle:
     -quote-id    string  quote ID (default: quote-1)
+    -email       string  client email (default: client@example.com)
+
+  contract-renewal:
+    -contract-id string  contract ID (default: contract-1)
     -email       string  client email (default: client@example.com)
 
   signal:
@@ -113,6 +118,13 @@ func main() {
 			QuoteDocTypes:    []string{"proposal", "pricing", "terms"},
 			ContractDocTypes: []string{"contract", "annex_a"},
 		})
+
+	case "contract-renewal":
+		fs := flag.NewFlagSet("contract-renewal", flag.ExitOnError)
+		contractID := fs.String("contract-id", "contract-1", "contract ID")
+		email := fs.String("email", "client@example.com", "client email")
+		_ = fs.Parse(args)
+		manifest, err = clbp.RenewalManifest(*contractID, *email)
 
 	default:
 		log.Fatalf("unknown command %q\n\n%s", cmd, usage)

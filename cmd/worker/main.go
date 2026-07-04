@@ -48,18 +48,18 @@ func main() {
 	g.RegisterHandler(tst.ExtractAudio, gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio))
 	g.RegisterHandler(tst.Package, gonveyor.Handle(tst.Package, th.Package))
 
-	// contract lifecycle — shared handlers registered on both phase-1 and phase-2 stations
+	// contract lifecycle — shared handlers registered once for every station that reuses them,
+	// across both phase-1/phase-2 of quote_lifecycle and the independent contract_renewal blueprint
 	g.RegisterBlueprint(clbp.QuoteLifecycle)
-	g.RegisterHandler(clst.GenerateQuoteDoc, gonveyor.Handle(clst.GenerateQuoteDoc, clh.GenerateDocument))
-	g.RegisterHandler(clst.GenerateContractDoc, gonveyor.Handle(clst.GenerateContractDoc, clh.GenerateDocument))
+	g.RegisterBlueprint(clbp.ContractRenewal)
+	g.RegisterHandlers(gonveyor.HandleFunc(clh.GenerateDocument), clst.GenerateQuoteDoc, clst.GenerateContractDoc)
+	g.RegisterHandlers(gonveyor.HandleFunc(clh.SendEmail), clst.SendQuoteEmail, clst.SendContractEmail)
+	g.RegisterHandlers(gonveyor.HandleFunc(clh.SyncCrm), clst.SyncCrmQuote, clst.SyncCrmContract)
 	g.RegisterHandler(clst.InitiateSignature, gonveyor.Handle(clst.InitiateSignature, clh.InitiateSignature))
 	g.RegisterHandler(clst.InitiatePayment, gonveyor.Handle(clst.InitiatePayment, clh.InitiatePayment))
-	g.RegisterHandler(clst.SendQuoteEmail, gonveyor.Handle(clst.SendQuoteEmail, clh.SendEmail))
 	g.RegisterHandler(clst.BundleContractDocs, gonveyor.Handle(clst.BundleContractDocs, clh.BundleContractDocs))
-	g.RegisterHandler(clst.SendContractEmail, gonveyor.Handle(clst.SendContractEmail, clh.SendEmail))
-	g.RegisterHandler(clst.SyncCrmQuote, gonveyor.Handle(clst.SyncCrmQuote, clh.SyncCrm))
-	g.RegisterHandler(clst.SyncCrmContract, gonveyor.Handle(clst.SyncCrmContract, clh.SyncCrm))
 	g.RegisterHandler(clst.CreateContract, gonveyor.Handle(clst.CreateContract, clh.CreateContract))
+	g.RegisterHandler(clst.CheckContractRenewal, gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal))
 
 	log.Println("worker listening...")
 	if err := g.Listen(context.Background()); err != nil {

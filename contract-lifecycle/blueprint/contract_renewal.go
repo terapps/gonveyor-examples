@@ -1,0 +1,64 @@
+package blueprint
+
+// Workflow: Renouvellement de contrat
+//
+// Indépendant de quote_lifecycle (déclenché séparément, ex: par un cron externe qui
+// détecte les contrats proches de l'échéance), mais réutilise trois stations telles
+// quelles — GenerateContractDoc, SendContractEmail, SyncCrmContract — câblées
+// différemment ici via des Wire() distincts de ceux de quote_lifecycle.go.
+//
+//   CheckContractRenewal ──> GenerateContractDoc ──┬──> SendContractEmail
+//                                                   └──> SyncCrmContract
+
+import (
+	"github.com/terapps/gonveyor"
+	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	"github.com/terapps/gonveyor/ledger"
+)
+
+var ContractRenewal = gonveyor.New("contract_renewal",
+	st.CheckContractRenewal, // root — dispatched via Seed at manifest time
+
+	gonveyor.Wire(st.GenerateContractDoc,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.DocumentInput) {
+			in.EntityID = o.ContractID
+		}),
+	),
+
+	gonveyor.Wire(st.SendContractEmail,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SendEmailInput) {
+			in.To = o.ClientEmail
+			in.Vars = map[string]string{"renewal_url": o.RenewalURL}
+		}),
+		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SendEmailInput) {
+			in.DocURLs = []string{o.DocURL}
+		}),
+	),
+
+	gonveyor.Wire(st.SyncCrmContract,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SyncCrmInput) {
+			in.EntityID = o.ContractID
+		}),
+		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SyncCrmInput) {
+			in.DocURLs = []string{o.DocURL}
+		}),
+	),
+)
+
+func RenewalManifest(contractID, clientEmail string) (ledger.BlueprintManifest, error) {
+	return ContractRenewal.Manifest(
+		gonveyor.Seed(st.CheckContractRenewal, st.CheckContractRenewalInput{
+			ContractID:  contractID,
+			ClientEmail: clientEmail,
+		}),
+		gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
+			DocType: "renewal",
+		}),
+		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+			Template: st.TemplateContractRenewal,
+		}),
+		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
+			EntityType: "contract",
+		}),
+	)
+}

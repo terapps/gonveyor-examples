@@ -23,6 +23,10 @@ var templates = map[st.EmailTemplate]emailTemplate{
 		subject: "Votre contrat est disponible",
 		body:    "Bonjour,\n\nVotre contrat a été finalisé. Vous trouverez vos documents ci-joints :\n{doc_urls}\n\nCordialement",
 	},
+	st.TemplateContractRenewal: {
+		subject: "Votre contrat arrive à échéance",
+		body:    "Bonjour,\n\nVotre contrat arrive bientôt à échéance. Renouvelez-le en cliquant sur le lien suivant :\n{renewal_url}\n\nCordialement",
+	},
 }
 
 func SendEmail(_ context.Context, in st.SendEmailInput) (st.SendEmailOutput, error) {

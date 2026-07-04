@@ -19,6 +19,7 @@ type EmailTemplate string
 const (
 	TemplateSignatureRequest EmailTemplate = "signature_request"
 	TemplateContractSigned   EmailTemplate = "contract_signed"
+	TemplateContractRenewal  EmailTemplate = "contract_renewal"
 )
 
 type SendEmailInput struct {
@@ -58,6 +59,18 @@ type InitiatePaymentInput struct {
 type InitiatePaymentOutput struct {
 	ProcessID  string
 	PaymentURL string
+}
+
+// --- Renewal (separate blueprint, reuses SendContractEmail) ---
+
+type CheckContractRenewalInput struct {
+	ContractID  string
+	ClientEmail string
+}
+type CheckContractRenewalOutput struct {
+	ContractID  string
+	ClientEmail string
+	RenewalURL  string
 }
 
 // --- Signals ---
@@ -114,3 +127,7 @@ var GenerateContractDoc  = gonveyor.Define[DocumentInput, DocumentOutput]("gener
 var BundleContractDocs  = gonveyor.Define[BundleContractDocsInput, BundleContractDocsOutput]("bundle_contract_docs")
 var SendContractEmail   = gonveyor.Define[SendEmailInput, SendEmailOutput]("send_contract_email")
 var SyncCrmContract     = gonveyor.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_contract")
+
+// CheckContractRenewal is the root of the contract_renewal blueprint (see blueprint/contract_renewal.go).
+// SendContractEmail is reused as-is from quote_lifecycle — same station, different Wire().
+var CheckContractRenewal = gonveyor.Define[CheckContractRenewalInput, CheckContractRenewalOutput]("check_contract_renewal")
