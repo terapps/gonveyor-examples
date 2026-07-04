@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"log/slog"
 	"os"
@@ -10,24 +11,30 @@ import (
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
 	clh "github.com/terapps/gonveyor-examples/contract-lifecycle/handler"
 	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor-examples/internal/infra"
 	sh "github.com/terapps/gonveyor-examples/simple/handler"
 	sst "github.com/terapps/gonveyor-examples/simple/stations"
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	th "github.com/terapps/gonveyor-examples/transcoding/handler"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
+	bunledger "github.com/terapps/gonveyor/ledger/bun"
+	"github.com/terapps/gonveyor/transport/pg"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
 )
 
+const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"
+
 func main() {
 	gonveyor.SetLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
-	g, cleanup, err := infra.BuildWorker()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cleanup()
+	db := openDB()
+	defer func() { _ = db.Close() }()
+
+	worker := pg.NewWorker(db)
+	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
 
 	// simple
 	g.RegisterBlueprint(sbp.SimpleDispatch)
@@ -58,4 +65,16 @@ func main() {
 	if err := g.Listen(context.Background()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func openDB() *bun.DB {
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(envOr("POSTGRES_DSN", defaultPostgresDSN))))
+	return bun.NewDB(sqldb, pgdialect.New())
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }

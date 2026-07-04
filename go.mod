@@ -3,7 +3,6 @@ module github.com/terapps/gonveyor-examples
 go 1.25.0
 
 require (
-	github.com/rabbitmq/amqp091-go v1.12.0
 	github.com/terapps/gonveyor v0.0.0
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/pgdialect v1.2.18

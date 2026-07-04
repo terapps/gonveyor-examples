@@ -2,17 +2,41 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"log"
 	"os"
 
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
-	"github.com/terapps/gonveyor-examples/internal/infra"
 	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
+	"github.com/terapps/gonveyor"
 	"github.com/terapps/gonveyor/ledger"
+	bunledger "github.com/terapps/gonveyor/ledger/bun"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
+
+const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"
+
+func buildGonductor() (*gonveyor.Gonductor, func(), error) {
+	db := openDB()
+	return gonveyor.NewGonductor(bunledger.New(db)), func() { _ = db.Close() }, nil
+}
+
+func openDB() *bun.DB {
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(envOr("POSTGRES_DSN", defaultPostgresDSN))))
+	return bun.NewDB(sqldb, pgdialect.New())
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
 
 const usage = `usage: publisher <command> [flags]
 
@@ -55,7 +79,7 @@ func main() {
 		return
 	}
 
-	gc, cleanup, err := infra.BuildGonductor()
+	gc, cleanup, err := buildGonductor()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,7 +144,7 @@ func runSignal(ctx context.Context, args []string) {
 		log.Fatalf("invalid JSON payload: %v", err)
 	}
 
-	gc, cleanup, err := infra.BuildGonductor()
+	gc, cleanup, err := buildGonductor()
 	if err != nil {
 		log.Fatal(err)
 	}
