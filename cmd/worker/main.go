@@ -83,7 +83,7 @@ func main() {
 	g.RegisterLauncher(clbp.QuoteLifecycleLauncher)
 	g.RegisterLauncher(clbp.RenewalLauncher)
 	g.RegisterLauncher(clbp.ScanLauncher)
-	g.RegisterHandler(clst.ScanContractRenewals, gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(db)))
+	g.RegisterHandler(clst.ScanContractRenewals, gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)))
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.GenerateDocument), clst.GenerateQuoteDoc, clst.GenerateContractDoc)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SendEmail), clst.SendQuoteEmail, clst.SendContractEmail)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SyncCrm), clst.SyncCrmQuote, clst.SyncCrmContract)

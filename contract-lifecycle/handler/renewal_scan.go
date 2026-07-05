@@ -2,12 +2,11 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 
+	"github.com/terapps/gonveyor"
+	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor/transport/pg"
-	"github.com/uptrace/bun"
 )
 
 // dueContract stubs what a real CRM/contracts query would return: contracts whose end
@@ -25,20 +24,21 @@ func findDueContracts() []dueContract {
 	}
 }
 
-// NewScanContractRenewals returns the ScanContractRenewals handler, closing over db to
-// file one contract_renewal launch_request per contract found due.
-func NewScanContractRenewals(db *bun.DB) func(context.Context, st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
+// NewScanContractRenewals returns the ScanContractRenewals handler, closing over gc to
+// launch one contract_renewal sub-blueprint per contract found due — a direct Launch,
+// not the launch_requests mailbox, since the scan already has the ManifestBuilder.
+func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 	return func(ctx context.Context, _ st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 		due := findDueContracts()
 		for _, c := range due {
-			params, err := json.Marshal(st.CheckContractRenewalInput{
+			manifest, err := clbp.RenewalLauncher.Manifest(st.CheckContractRenewalInput{
 				ContractID:  c.ContractID,
 				ClientEmail: c.ClientEmail,
 			})
 			if err != nil {
 				return st.ScanRenewalsOutput{}, err
 			}
-			if _, err := pg.CreateLaunchRequest(ctx, db, "contract_renewal", params); err != nil {
+			if err := gc.Launch(ctx, manifest); err != nil {
 				return st.ScanRenewalsOutput{}, err
 			}
 		}
