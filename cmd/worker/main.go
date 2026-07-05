@@ -93,12 +93,6 @@ func main() {
 	g.RegisterHandler(clst.CreateContract, gonveyor.Handle(clst.CreateContract, clh.CreateContract))
 	g.RegisterHandler(clst.CheckContractRenewal, gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal))
 
-	// parent/child demo — spawns a contract_renewal as a child, waits on it via a Signal
-	// gate instead of blocking a worker goroutine
-	g.RegisterLauncher(clbp.ParentChildDemoLauncher)
-	g.RegisterHandler(clst.SpawnChildRenewal, gonveyor.Handle(clst.SpawnChildRenewal, clh.NewSpawnChildRenewal(db)))
-	g.RegisterHandler(clst.AfterChildDone, gonveyor.Handle(clst.AfterChildDone, clh.AfterChildDone))
-
 	ctx, stop := ossignal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 

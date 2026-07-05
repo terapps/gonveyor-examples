@@ -132,20 +132,6 @@ var SyncCrmContract = gonveyor.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_con
 // SendContractEmail is reused as-is from quote_lifecycle — same station, different Wire().
 var CheckContractRenewal = gonveyor.Define[CheckContractRenewalInput, CheckContractRenewalOutput]("check_contract_renewal")
 
-// --- Parent/child demo (see blueprint/parent_child_demo.go) ---
-
-type SpawnChildRenewalInput struct {
-	ContractID  string `validate:"required"`
-	ClientEmail string `validate:"required,email"`
-}
-type SpawnChildRenewalOutput struct{}
-
-// SpawnChildRenewal launches a contract_renewal as a child and returns immediately —
-// it never waits on it itself. ChildGate is the gate AfterChildDone waits behind.
-var SpawnChildRenewal = gonveyor.Define[SpawnChildRenewalInput, SpawnChildRenewalOutput]("spawn_child_renewal")
-var ChildGate = gonveyor.Signal[struct{}]("child_done")
-var AfterChildDone = gonveyor.Define[struct{}, struct{}]("after_child_done")
-
 // --- Renewal scan (see blueprint/contract_renewal_scan.go) ---
 
 type ScanRenewalsInput struct{}
