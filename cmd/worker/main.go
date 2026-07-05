@@ -53,6 +53,8 @@ func main() {
 	db := openDB()
 	defer func() { _ = db.Close() }()
 
+	gc := gonveyor.NewGonductor(bunledger.New(db))
+
 	var opts []pg.WorkerOption
 	if len(routingKeys) > 0 {
 		opts = append(opts, pg.WithRoutingKeys(routingKeys...))
@@ -60,6 +62,7 @@ func main() {
 	if *name != "" {
 		opts = append(opts, pg.WithName(*name))
 	}
+	opts = append(opts, pg.WithGonductor(gc))
 	worker := pg.NewWorker(db, opts...)
 	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
 
