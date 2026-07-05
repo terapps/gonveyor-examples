@@ -7,7 +7,9 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	ossignal "os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/terapps/gonveyor"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
@@ -58,6 +60,12 @@ func main() {
 	if *name != "" {
 		opts = append(opts, pg.WithName(*name))
 	}
+	opts = append(opts, pg.WithBlueprints(
+		sbp.SimpleDispatch,
+		tbp.Transcoding,
+		clbp.QuoteLifecycle,
+		clbp.ContractRenewal,
+	))
 	worker := pg.NewWorker(db, opts...)
 	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
 
@@ -86,8 +94,11 @@ func main() {
 	g.RegisterHandler(clst.CreateContract, gonveyor.Handle(clst.CreateContract, clh.CreateContract))
 	g.RegisterHandler(clst.CheckContractRenewal, gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal))
 
+	ctx, stop := ossignal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	log.Println("worker listening...")
-	if err := g.Listen(context.Background()); err != nil {
+	if err := g.Listen(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
