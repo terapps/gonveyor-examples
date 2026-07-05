@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"math/rand"
 
 	"github.com/terapps/gonveyor"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
@@ -18,10 +20,18 @@ type dueContract struct {
 	ClientEmail string
 }
 
+// findDueContracts fakes a variable-size result set (1-50 contracts) to exercise the
+// scan's fan-out under load, instead of always spawning a single sub-blueprint.
 func findDueContracts() []dueContract {
-	return []dueContract{
-		{ContractID: "contract-42", ClientEmail: "client42@example.com"},
+	n := rand.Intn(50) + 1
+	due := make([]dueContract, n)
+	for i := range due {
+		due[i] = dueContract{
+			ContractID:  fmt.Sprintf("contract-%d", i),
+			ClientEmail: fmt.Sprintf("client%d@example.com", i),
+		}
 	}
+	return due
 }
 
 // NewScanContractRenewals returns the ScanContractRenewals handler, closing over gc to
