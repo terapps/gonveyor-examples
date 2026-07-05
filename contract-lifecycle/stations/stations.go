@@ -64,8 +64,8 @@ type InitiatePaymentOutput struct {
 // --- Renewal (separate blueprint, reuses SendContractEmail) ---
 
 type CheckContractRenewalInput struct {
-	ContractID  string
-	ClientEmail string
+	ContractID  string `validate:"required"`
+	ClientEmail string `validate:"required,email"`
 }
 type CheckContractRenewalOutput struct {
 	ContractID  string

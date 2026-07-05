@@ -9,6 +9,7 @@ import (
 	"os"
 
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
+	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	"github.com/terapps/gonveyor"
@@ -124,7 +125,10 @@ func main() {
 		contractID := fs.String("contract-id", "contract-1", "contract ID")
 		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
-		manifest, err = clbp.RenewalManifest(*contractID, *email)
+		manifest, err = clbp.RenewalManifest(clst.CheckContractRenewalInput{
+			ContractID:  *contractID,
+			ClientEmail: *email,
+		})
 
 	default:
 		log.Fatalf("unknown command %q\n\n%s", cmd, usage)
