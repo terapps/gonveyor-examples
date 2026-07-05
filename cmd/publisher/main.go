@@ -43,12 +43,12 @@ func envOr(key, fallback string) string {
 const usage = `usage: publisher <command> [flags]
 
 commands:
-  simple                    submit a simple welcome dispatch
-  transcoding                submit a video transcoding workflow
-  quote-lifecycle             submit a full quote → contract lifecycle workflow
-  contract-renewal            submit a standalone contract renewal reminder
-  schedule-contract-renewal   register a recurring contract renewal reminder
-  signal                      send a signal to an existing blueprint
+  simple                         submit a simple welcome dispatch
+  transcoding                     submit a video transcoding workflow
+  quote-lifecycle                  submit a full quote → contract lifecycle workflow
+  contract-renewal                 submit a standalone contract renewal reminder
+  schedule-contract-renewal-scan   register the recurring contract renewal scan
+  signal                           send a signal to an existing blueprint
 
 flags:
   simple:
@@ -68,10 +68,8 @@ flags:
     -contract-id string  contract ID (default: contract-1)
     -email       string  client email (default: client@example.com)
 
-  schedule-contract-renewal:
-    -contract-id string  contract ID (default: contract-1)
-    -email       string  client email (default: client@example.com)
-    -cron        string  cron expression, standard 5-field or "@every 1h30m" (default: "0 9 * * *")
+  schedule-contract-renewal-scan:
+    -cron  string  cron expression, standard 5-field or "@every 1h30m" (default: "0 9 * * *")
 
   signal:
     -blueprint-id  string  blueprint instance ID (required)
@@ -92,8 +90,8 @@ func main() {
 		runSignal(ctx, args)
 		return
 	}
-	if cmd == "schedule-contract-renewal" {
-		runScheduleContractRenewal(ctx, args)
+	if cmd == "schedule-contract-renewal-scan" {
+		runScheduleContractRenewalScan(ctx, args)
 		return
 	}
 
@@ -186,29 +184,20 @@ func runSignal(ctx context.Context, args []string) {
 	log.Printf("signal %q sent to blueprint %s", *key, *blueprintID)
 }
 
-// runScheduleContractRenewal registers a recurring contract_renewal launch — the native
-// replacement for the "external cron" this blueprint's doc comment used to call for.
-func runScheduleContractRenewal(ctx context.Context, args []string) {
-	fs := flag.NewFlagSet("schedule-contract-renewal", flag.ExitOnError)
-	contractID := fs.String("contract-id", "contract-1", "contract ID")
-	email := fs.String("email", "client@example.com", "client email")
+// runScheduleContractRenewalScan registers the recurring contract_renewal_scan launch —
+// one schedule total, not one per contract: the scan reads live contract data every run
+// and files a contract_renewal launch_request per contract found due.
+func runScheduleContractRenewalScan(ctx context.Context, args []string) {
+	fs := flag.NewFlagSet("schedule-contract-renewal-scan", flag.ExitOnError)
 	cronExpr := fs.String("cron", "0 9 * * *", `cron expression, standard 5-field or "@every 1h30m"`)
 	_ = fs.Parse(args)
-
-	params, err := json.Marshal(clst.CheckContractRenewalInput{
-		ContractID:  *contractID,
-		ClientEmail: *email,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	db := openDB()
 	defer func() { _ = db.Close() }()
 
-	id, err := pg.CreateSchedule(ctx, db, "contract_renewal", *cronExpr, params)
+	id, err := pg.CreateSchedule(ctx, db, "contract_renewal_scan", *cronExpr, []byte(`{}`))
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("schedule %s registered for contract_renewal (%s)", id, *cronExpr)
+	log.Printf("schedule %s registered for contract_renewal_scan (%s)", id, *cronExpr)
 }

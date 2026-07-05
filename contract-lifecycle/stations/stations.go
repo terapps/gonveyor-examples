@@ -131,3 +131,15 @@ var SyncCrmContract = gonveyor.Define[SyncCrmInput, SyncCrmOutput]("sync_crm_con
 // CheckContractRenewal is the root of the contract_renewal blueprint (see blueprint/contract_renewal.go).
 // SendContractEmail is reused as-is from quote_lifecycle — same station, different Wire().
 var CheckContractRenewal = gonveyor.Define[CheckContractRenewalInput, CheckContractRenewalOutput]("check_contract_renewal")
+
+// --- Renewal scan (see blueprint/contract_renewal_scan.go) ---
+
+type ScanRenewalsInput struct{}
+type ScanRenewalsOutput struct {
+	Found int
+}
+
+// ScanContractRenewals is the root of contract_renewal_scan — one recurring schedule
+// that files one contract_renewal launch_request per contract found due, instead of one
+// schedule per contract.
+var ScanContractRenewals = gonveyor.Define[ScanRenewalsInput, ScanRenewalsOutput]("scan_contract_renewals")

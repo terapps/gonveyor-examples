@@ -82,6 +82,8 @@ func main() {
 	// across both phase-1/phase-2 of quote_lifecycle and the independent contract_renewal blueprint
 	g.RegisterLauncher(clbp.QuoteLifecycleLauncher)
 	g.RegisterLauncher(clbp.RenewalLauncher)
+	g.RegisterLauncher(clbp.ScanLauncher)
+	g.RegisterHandler(clst.ScanContractRenewals, gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(db)))
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.GenerateDocument), clst.GenerateQuoteDoc, clst.GenerateContractDoc)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SendEmail), clst.SendQuoteEmail, clst.SendContractEmail)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SyncCrm), clst.SyncCrmQuote, clst.SyncCrmContract)
