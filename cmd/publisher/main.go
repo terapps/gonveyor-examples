@@ -60,6 +60,7 @@ flags:
   quote-lifecycle:
     -quote-id    string  quote ID (default: quote-1)
     -email       string  client email (default: client@example.com)
+    -amount      float   quote amount (default: 100)
 
   contract-renewal:
     -contract-id string  contract ID (default: contract-1)
@@ -112,10 +113,12 @@ func main() {
 		fs := flag.NewFlagSet("quote-lifecycle", flag.ExitOnError)
 		quoteID := fs.String("quote-id", "quote-1", "quote ID")
 		email := fs.String("email", "client@example.com", "client email")
+		amount := fs.Float64("amount", 100, "quote amount")
 		_ = fs.Parse(args)
 		manifest, err = clbp.Manifest(clbp.Params{
 			QuoteID:          *quoteID,
 			ClientEmail:      *email,
+			Amount:           *amount,
 			QuoteDocTypes:    []string{"proposal", "pricing", "terms"},
 			ContractDocTypes: []string{"contract", "annex_a"},
 		})
