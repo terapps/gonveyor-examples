@@ -113,7 +113,7 @@ type Params struct {
 	ContractDocTypes []string `validate:"required,min=1"` // e.g. ["contract", "annex_a"]
 }
 
-var Launcher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p Params) []gonveyor.ManifestOption {
+var QuoteLifecycleLauncher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p Params) []gonveyor.ManifestOption {
 	return []gonveyor.ManifestOption{
 		// N quote documents dispatched in parallel
 		gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.DocumentInput) {
@@ -159,5 +159,5 @@ var Launcher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p Params) []gonv
 })
 
 func Manifest(p Params) (ledger.BlueprintManifest, error) {
-	return Launcher.Manifest(p)
+	return QuoteLifecycleLauncher.Manifest(p)
 }

@@ -60,21 +60,15 @@ func main() {
 	if *name != "" {
 		opts = append(opts, pg.WithName(*name))
 	}
-	opts = append(opts, pg.WithBlueprints(
-		sbp.Launcher,
-		tbp.Launcher,
-		clbp.Launcher,
-		clbp.RenewalLauncher,
-	))
 	worker := pg.NewWorker(db, opts...)
 	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
 
 	// simple
-	g.RegisterBlueprint(sbp.SimpleDispatch)
+	g.RegisterLauncher(sbp.Launcher)
 	g.RegisterHandler(sst.SendWelcome, gonveyor.Handle(sst.SendWelcome, sh.SendWelcome))
 
 	// transcoding
-	g.RegisterBlueprint(tbp.Transcoding)
+	g.RegisterLauncher(tbp.Launcher)
 	g.RegisterHandler(tst.Download, gonveyor.Handle(tst.Download, th.Download))
 	g.RegisterHandler(tst.Transcode, gonveyor.Handle(tst.Transcode, th.Transcode))
 	g.RegisterHandler(tst.Thumbnail, gonveyor.Handle(tst.Thumbnail, th.Thumbnail))
@@ -83,8 +77,8 @@ func main() {
 
 	// contract lifecycle — shared handlers registered once for every station that reuses them,
 	// across both phase-1/phase-2 of quote_lifecycle and the independent contract_renewal blueprint
-	g.RegisterBlueprint(clbp.QuoteLifecycle)
-	g.RegisterBlueprint(clbp.ContractRenewal)
+	g.RegisterLauncher(clbp.QuoteLifecycleLauncher)
+	g.RegisterLauncher(clbp.RenewalLauncher)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.GenerateDocument), clst.GenerateQuoteDoc, clst.GenerateContractDoc)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SendEmail), clst.SendQuoteEmail, clst.SendContractEmail)
 	g.RegisterHandlers(gonveyor.HandleFunc(clh.SyncCrm), clst.SyncCrmQuote, clst.SyncCrmContract)
