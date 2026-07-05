@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"log"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/terapps/gonveyor"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
@@ -27,13 +29,36 @@ import (
 
 const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"
 
+// routingKeysFlag accumulates across repeated occurrences (-k a -k b) and also splits
+// each occurrence on commas (-k a,b), so both styles work and can be mixed.
+type routingKeysFlag []string
+
+func (f *routingKeysFlag) String() string { return strings.Join(*f, ",") }
+func (f *routingKeysFlag) Set(v string) error {
+	*f = append(*f, strings.Split(v, ",")...)
+	return nil
+}
+
 func main() {
+	var routingKeys routingKeysFlag
+	flag.Var(&routingKeys, "routing-keys", "routing keys to poll, repeatable and/or comma-separated (default: gonveyor.default only)")
+	flag.Var(&routingKeys, "k", "shorthand for -routing-keys")
+	name := flag.String("name", "", "worker name recorded in worker_instances")
+	flag.Parse()
+
 	gonveyor.SetLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
 	db := openDB()
 	defer func() { _ = db.Close() }()
 
-	worker := pg.NewWorker(db)
+	var opts []pg.WorkerOption
+	if len(routingKeys) > 0 {
+		opts = append(opts, pg.WithRoutingKeys(routingKeys...))
+	}
+	if *name != "" {
+		opts = append(opts, pg.WithName(*name))
+	}
+	worker := pg.NewWorker(db, opts...)
 	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
 
 	// simple
