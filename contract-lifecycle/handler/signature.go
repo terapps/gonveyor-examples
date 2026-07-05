@@ -12,7 +12,7 @@ func InitiateSignature(_ context.Context, in st.InitiateSignatureInput) (st.Init
 	slog.Info("initiating signature process", "quote_id", in.QuoteID, "docs", len(in.DocURLs))
 	processID := fmt.Sprintf("sig-%s", in.QuoteID)
 	return st.InitiateSignatureOutput{
-		ProcessID:   processID,
+		ProcessID:    processID,
 		SignatureURL: fmt.Sprintf("https://sign.example.com/process/%s", processID),
 	}, nil
 }

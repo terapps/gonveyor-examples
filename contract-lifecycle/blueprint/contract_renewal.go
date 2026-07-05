@@ -45,19 +45,21 @@ var ContractRenewal = gonveyor.New("contract_renewal",
 	),
 )
 
+var RenewalLauncher = gonveyor.NewManifestBuilder(ContractRenewal, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
+	return []gonveyor.ManifestOption{
+		gonveyor.Seed(st.CheckContractRenewal, p),
+		gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
+			DocType: "renewal",
+		}),
+		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+			Template: st.TemplateContractRenewal,
+		}),
+		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
+			EntityType: "contract",
+		}),
+	}
+})
+
 func RenewalManifest(p st.CheckContractRenewalInput) (ledger.BlueprintManifest, error) {
-	return gonveyor.ManifestFrom(ContractRenewal, p, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
-		return []gonveyor.ManifestOption{
-			gonveyor.Seed(st.CheckContractRenewal, p),
-			gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
-				DocType: "renewal",
-			}),
-			gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
-				Template: st.TemplateContractRenewal,
-			}),
-			gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
-				EntityType: "contract",
-			}),
-		}
-	})
+	return RenewalLauncher.Manifest(p)
 }

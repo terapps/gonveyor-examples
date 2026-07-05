@@ -61,10 +61,10 @@ func main() {
 		opts = append(opts, pg.WithName(*name))
 	}
 	opts = append(opts, pg.WithBlueprints(
-		sbp.SimpleDispatch,
-		tbp.Transcoding,
-		clbp.QuoteLifecycle,
-		clbp.ContractRenewal,
+		sbp.Launcher,
+		tbp.Launcher,
+		clbp.Launcher,
+		clbp.RenewalLauncher,
 	))
 	worker := pg.NewWorker(db, opts...)
 	g := gonveyor.NewGonveyor(bunledger.New(db), worker)

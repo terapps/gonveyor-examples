@@ -3,8 +3,8 @@ package stations
 import "github.com/terapps/gonveyor"
 
 type WelcomeInput struct {
-	UserID string
-	Email  string
+	UserID string `validate:"required"`
+	Email  string `validate:"required,email"`
 }
 
 type WelcomeOutput struct {

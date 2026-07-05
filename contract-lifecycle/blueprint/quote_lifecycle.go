@@ -15,8 +15,8 @@ package blueprint
 
 import (
 	"github.com/terapps/gonveyor"
-	"github.com/terapps/gonveyor/ledger"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	"github.com/terapps/gonveyor/ledger"
 )
 
 var QuoteLifecycle = gonveyor.New("quote_lifecycle",
@@ -92,7 +92,7 @@ var QuoteLifecycle = gonveyor.New("quote_lifecycle",
 
 	gonveyor.Wire(st.SendContractEmail,
 		gonveyor.Intake(st.BundleContractDocs, func(o st.BundleContractDocsOutput, in *st.SendEmailInput) {
-			in.To      = o.ClientEmail
+			in.To = o.ClientEmail
 			in.DocURLs = o.DocURLs
 		}),
 	),
@@ -100,7 +100,7 @@ var QuoteLifecycle = gonveyor.New("quote_lifecycle",
 	gonveyor.Wire(st.SyncCrmContract,
 		gonveyor.Intake(st.BundleContractDocs, func(o st.BundleContractDocsOutput, in *st.SyncCrmInput) {
 			in.EntityID = o.ContractID
-			in.DocURLs  = o.DocURLs
+			in.DocURLs = o.DocURLs
 		}),
 	),
 )
@@ -113,49 +113,51 @@ type Params struct {
 	ContractDocTypes []string `validate:"required,min=1"` // e.g. ["contract", "annex_a"]
 }
 
+var Launcher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p Params) []gonveyor.ManifestOption {
+	return []gonveyor.ManifestOption{
+		// N quote documents dispatched in parallel
+		gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.DocumentInput) {
+			in.EntityID = p.QuoteID
+			in.DocType = docType
+		}),
+		// Ambient context seeded into downstream nodes
+		gonveyor.Seed(st.InitiateSignature, st.InitiateSignatureInput{
+			QuoteID:     p.QuoteID,
+			ClientEmail: p.ClientEmail,
+		}),
+		gonveyor.Seed(st.InitiatePayment, st.InitiatePaymentInput{
+			QuoteID:     p.QuoteID,
+			ClientEmail: p.ClientEmail,
+			Amount:      p.Amount,
+		}),
+		gonveyor.Seed(st.SyncCrmQuote, st.SyncCrmInput{
+			EntityType: "quote",
+			EntityID:   p.QuoteID,
+		}),
+		gonveyor.Seed(st.SendQuoteEmail, st.SendEmailInput{
+			To:       p.ClientEmail,
+			Template: st.TemplateSignatureRequest,
+		}),
+		gonveyor.Seed(st.CreateContract, st.CreateContractInput{
+			QuoteID:     p.QuoteID,
+			ClientEmail: p.ClientEmail,
+		}),
+		gonveyor.Seed(st.BundleContractDocs, st.BundleContractDocsInput{
+			ClientEmail: p.ClientEmail,
+		}),
+		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+			Template: st.TemplateContractSigned,
+		}),
+		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
+			EntityType: "contract",
+		}),
+		// N contract documents dispatched in parallel after CreateContract
+		gonveyor.Seeds(st.GenerateContractDoc, p.ContractDocTypes, func(docType string, in *st.DocumentInput) {
+			in.DocType = docType
+		}),
+	}
+})
+
 func Manifest(p Params) (ledger.BlueprintManifest, error) {
-	return gonveyor.ManifestFrom(QuoteLifecycle, p, func(p Params) []gonveyor.ManifestOption {
-		return []gonveyor.ManifestOption{
-			// N quote documents dispatched in parallel
-			gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.DocumentInput) {
-				in.EntityID = p.QuoteID
-				in.DocType = docType
-			}),
-			// Ambient context seeded into downstream nodes
-			gonveyor.Seed(st.InitiateSignature, st.InitiateSignatureInput{
-				QuoteID:     p.QuoteID,
-				ClientEmail: p.ClientEmail,
-			}),
-			gonveyor.Seed(st.InitiatePayment, st.InitiatePaymentInput{
-				QuoteID:     p.QuoteID,
-				ClientEmail: p.ClientEmail,
-				Amount:      p.Amount,
-			}),
-			gonveyor.Seed(st.SyncCrmQuote, st.SyncCrmInput{
-				EntityType: "quote",
-				EntityID:   p.QuoteID,
-			}),
-			gonveyor.Seed(st.SendQuoteEmail, st.SendEmailInput{
-				To:       p.ClientEmail,
-				Template: st.TemplateSignatureRequest,
-			}),
-			gonveyor.Seed(st.CreateContract, st.CreateContractInput{
-				QuoteID:     p.QuoteID,
-				ClientEmail: p.ClientEmail,
-			}),
-			gonveyor.Seed(st.BundleContractDocs, st.BundleContractDocsInput{
-				ClientEmail: p.ClientEmail,
-			}),
-			gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
-				Template: st.TemplateContractSigned,
-			}),
-			gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
-				EntityType: "contract",
-			}),
-			// N contract documents dispatched in parallel after CreateContract
-			gonveyor.Seeds(st.GenerateContractDoc, p.ContractDocTypes, func(docType string, in *st.DocumentInput) {
-				in.DocType = docType
-			}),
-		}
-	})
+	return Launcher.Manifest(p)
 }

@@ -2,8 +2,8 @@ package blueprint
 
 import (
 	"github.com/terapps/gonveyor"
-	"github.com/terapps/gonveyor/ledger"
 	st "github.com/terapps/gonveyor-examples/transcoding/stations"
+	"github.com/terapps/gonveyor/ledger"
 )
 
 // Transcoding: download → [transcode, thumbnail, extract_audio] → package
@@ -44,8 +44,10 @@ var Transcoding = gonveyor.New("transcoding",
 	),
 )
 
+var Launcher = gonveyor.NewManifestBuilder(Transcoding, func(p st.DownloadInput) []gonveyor.ManifestOption {
+	return []gonveyor.ManifestOption{gonveyor.Seed(st.Download, p)}
+})
+
 func Manifest(assetID, sourceURL string) (ledger.BlueprintManifest, error) {
-	return Transcoding.Manifest(
-		gonveyor.Seed(st.Download, st.DownloadInput{AssetID: assetID, SourceURL: sourceURL}),
-	)
+	return Launcher.Manifest(st.DownloadInput{AssetID: assetID, SourceURL: sourceURL})
 }

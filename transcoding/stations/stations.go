@@ -3,8 +3,8 @@ package stations
 import "github.com/terapps/gonveyor"
 
 type DownloadInput struct {
-	AssetID   string
-	SourceURL string
+	AssetID   string `validate:"required"`
+	SourceURL string `validate:"required,url"`
 }
 type DownloadOutput struct {
 	AssetID  string
@@ -45,8 +45,8 @@ type PackageOutput struct {
 	BundleURL string
 }
 
-var Download     = gonveyor.Define[DownloadInput, DownloadOutput]("download")
-var Transcode    = gonveyor.Define[TranscodeInput, TranscodeOutput]("transcode")
-var Thumbnail    = gonveyor.Define[ThumbnailInput, ThumbnailOutput]("thumbnail")
+var Download = gonveyor.Define[DownloadInput, DownloadOutput]("download")
+var Transcode = gonveyor.Define[TranscodeInput, TranscodeOutput]("transcode")
+var Thumbnail = gonveyor.Define[ThumbnailInput, ThumbnailOutput]("thumbnail")
 var ExtractAudio = gonveyor.Define[ExtractAudioInput, ExtractAudioOutput]("extract_audio")
-var Package      = gonveyor.Define[PackageInput, PackageOutput]("package")
+var Package = gonveyor.Define[PackageInput, PackageOutput]("package")
