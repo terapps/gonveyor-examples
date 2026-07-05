@@ -2,10 +2,10 @@ package blueprint
 
 // Workflow: Renouvellement de contrat
 //
-// Indépendant de quote_lifecycle (déclenché séparément, ex: par un cron externe qui
-// détecte les contrats proches de l'échéance), mais réutilise trois stations telles
-// quelles — GenerateContractDoc, SendContractEmail, SyncCrmContract — câblées
-// différemment ici via des Wire() distincts de ceux de quote_lifecycle.go.
+// Indépendant de quote_lifecycle (déclenché séparément — voir pg.CreateSchedule pour un
+// déclenchement récurrent natif, cmd/publisher schedule-contract-renewal), mais réutilise
+// trois stations telles quelles — GenerateContractDoc, SendContractEmail, SyncCrmContract
+// — câblées différemment ici via des Wire() distincts de ceux de quote_lifecycle.go.
 //
 //   CheckContractRenewal ──> GenerateContractDoc ──┬──> SendContractEmail
 //                                                   └──> SyncCrmContract

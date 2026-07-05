@@ -15,6 +15,7 @@ import (
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	"github.com/terapps/gonveyor/ledger"
 	bunledger "github.com/terapps/gonveyor/ledger/bun"
+	"github.com/terapps/gonveyor/transport/pg"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -42,11 +43,12 @@ func envOr(key, fallback string) string {
 const usage = `usage: publisher <command> [flags]
 
 commands:
-  simple            submit a simple welcome dispatch
-  transcoding       submit a video transcoding workflow
-  quote-lifecycle   submit a full quote → contract lifecycle workflow
-  contract-renewal  submit a standalone contract renewal reminder
-  signal            send a signal to an existing blueprint
+  simple                    submit a simple welcome dispatch
+  transcoding                submit a video transcoding workflow
+  quote-lifecycle             submit a full quote → contract lifecycle workflow
+  contract-renewal            submit a standalone contract renewal reminder
+  schedule-contract-renewal   register a recurring contract renewal reminder
+  signal                      send a signal to an existing blueprint
 
 flags:
   simple:
@@ -66,6 +68,11 @@ flags:
     -contract-id string  contract ID (default: contract-1)
     -email       string  client email (default: client@example.com)
 
+  schedule-contract-renewal:
+    -contract-id string  contract ID (default: contract-1)
+    -email       string  client email (default: client@example.com)
+    -cron        string  cron expression, standard 5-field or "@every 1h30m" (default: "0 9 * * *")
+
   signal:
     -blueprint-id  string  blueprint instance ID (required)
     -key           string  signal key, e.g. await_signature (required)
@@ -83,6 +90,10 @@ func main() {
 
 	if cmd == "signal" {
 		runSignal(ctx, args)
+		return
+	}
+	if cmd == "schedule-contract-renewal" {
+		runScheduleContractRenewal(ctx, args)
 		return
 	}
 
@@ -173,4 +184,31 @@ func runSignal(ctx context.Context, args []string) {
 		log.Fatal(err)
 	}
 	log.Printf("signal %q sent to blueprint %s", *key, *blueprintID)
+}
+
+// runScheduleContractRenewal registers a recurring contract_renewal launch — the native
+// replacement for the "external cron" this blueprint's doc comment used to call for.
+func runScheduleContractRenewal(ctx context.Context, args []string) {
+	fs := flag.NewFlagSet("schedule-contract-renewal", flag.ExitOnError)
+	contractID := fs.String("contract-id", "contract-1", "contract ID")
+	email := fs.String("email", "client@example.com", "client email")
+	cronExpr := fs.String("cron", "0 9 * * *", `cron expression, standard 5-field or "@every 1h30m"`)
+	_ = fs.Parse(args)
+
+	params, err := json.Marshal(clst.CheckContractRenewalInput{
+		ContractID:  *contractID,
+		ClientEmail: *email,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db := openDB()
+	defer func() { _ = db.Close() }()
+
+	id, err := pg.CreateSchedule(ctx, db, "contract_renewal", *cronExpr, params)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("schedule %s registered for contract_renewal (%s)", id, *cronExpr)
 }
