@@ -48,6 +48,7 @@ commands:
   quote-lifecycle                  submit a full quote → contract lifecycle workflow
   contract-renewal                 submit a standalone contract renewal reminder
   schedule-contract-renewal-scan   register the recurring contract renewal scan
+  parent-child-demo                spawn a contract_renewal as a child and wait on it
   signal                           send a signal to an existing blueprint
 
 flags:
@@ -70,6 +71,10 @@ flags:
 
   schedule-contract-renewal-scan:
     -cron  string  cron expression, standard 5-field or "@every 1h30m" (default: "0 9 * * *")
+
+  parent-child-demo:
+    -contract-id string  contract ID for the child renewal (default: contract-1)
+    -email       string  client email (default: client@example.com)
 
   signal:
     -blueprint-id  string  blueprint instance ID (required)
@@ -138,6 +143,16 @@ func main() {
 		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
 		manifest, err = clbp.RenewalManifest(clst.CheckContractRenewalInput{
+			ContractID:  *contractID,
+			ClientEmail: *email,
+		})
+
+	case "parent-child-demo":
+		fs := flag.NewFlagSet("parent-child-demo", flag.ExitOnError)
+		contractID := fs.String("contract-id", "contract-1", "contract ID")
+		email := fs.String("email", "client@example.com", "client email")
+		_ = fs.Parse(args)
+		manifest, err = clbp.ParentChildDemoLauncher.Manifest(clst.SpawnChildRenewalInput{
 			ContractID:  *contractID,
 			ClientEmail: *email,
 		})
