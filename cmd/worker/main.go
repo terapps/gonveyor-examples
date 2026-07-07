@@ -20,8 +20,6 @@ import (
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	th "github.com/terapps/gonveyor-examples/transcoding/handler"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
-	bunledger "github.com/terapps/gonveyor/ledger/bun"
-	"github.com/terapps/gonveyor/transport/pg"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -45,53 +43,57 @@ func main() {
 	var routingKeys routingKeysFlag
 	flag.Var(&routingKeys, "routing-keys", "routing keys to poll, repeatable and/or comma-separated (default: gonveyor.default only)")
 	flag.Var(&routingKeys, "k", "shorthand for -routing-keys")
-	name := flag.String("name", "", "worker name recorded in worker_instances")
 	flag.Parse()
-
-	gonveyor.SetLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
 	db := openDB()
 	defer func() { _ = db.Close() }()
 
-	gc := gonveyor.NewGonductor(bunledger.New(db))
-
-	var opts []pg.WorkerOption
-	if len(routingKeys) > 0 {
-		opts = append(opts, pg.WithRoutingKeys(routingKeys...))
-	}
-	if *name != "" {
-		opts = append(opts, pg.WithName(*name))
-	}
-	opts = append(opts, pg.WithGonductor(gc))
-	worker := pg.NewWorker(db, opts...)
-	g := gonveyor.NewGonveyor(bunledger.New(db), worker)
+	gc := gonveyor.NewGonductor(db)
+	reg := gonveyor.NewStationRegistry()
 
 	// simple
-	g.RegisterLauncher(sbp.Launcher)
-	g.RegisterHandler(sst.SendWelcome, gonveyor.Handle(sst.SendWelcome, sh.SendWelcome))
+	reg.RegisterLauncher(sbp.Launcher)
+	reg.RegisterHandler(sst.SendWelcome, gonveyor.Handle(sst.SendWelcome, sh.SendWelcome))
 
 	// transcoding
-	g.RegisterLauncher(tbp.Launcher)
-	g.RegisterHandler(tst.Download, gonveyor.Handle(tst.Download, th.Download))
-	g.RegisterHandler(tst.Transcode, gonveyor.Handle(tst.Transcode, th.Transcode))
-	g.RegisterHandler(tst.Thumbnail, gonveyor.Handle(tst.Thumbnail, th.Thumbnail))
-	g.RegisterHandler(tst.ExtractAudio, gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio))
-	g.RegisterHandler(tst.Package, gonveyor.Handle(tst.Package, th.Package))
+	reg.RegisterLauncher(tbp.Launcher)
+	reg.RegisterHandler(tst.Download, gonveyor.Handle(tst.Download, th.Download))
+	reg.RegisterHandler(tst.Transcode, gonveyor.Handle(tst.Transcode, th.Transcode))
+	reg.RegisterHandler(tst.Thumbnail, gonveyor.Handle(tst.Thumbnail, th.Thumbnail))
+	reg.RegisterHandler(tst.ExtractAudio, gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio))
+	reg.RegisterHandler(tst.Package, gonveyor.Handle(tst.Package, th.Package))
 
 	// contract lifecycle — shared handlers registered once for every station that reuses them,
 	// across both phase-1/phase-2 of quote_lifecycle and the independent contract_renewal blueprint
-	g.RegisterLauncher(clbp.QuoteLifecycleLauncher)
-	g.RegisterLauncher(clbp.RenewalLauncher)
-	g.RegisterLauncher(clbp.ScanLauncher)
-	g.RegisterHandler(clst.ScanContractRenewals, gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)))
-	g.RegisterHandlers(gonveyor.HandleFunc(clh.GenerateDocument), clst.GenerateQuoteDoc, clst.GenerateContractDoc)
-	g.RegisterHandlers(gonveyor.HandleFunc(clh.SendEmail), clst.SendQuoteEmail, clst.SendContractEmail)
-	g.RegisterHandlers(gonveyor.HandleFunc(clh.SyncCrm), clst.SyncCrmQuote, clst.SyncCrmContract)
-	g.RegisterHandler(clst.InitiateSignature, gonveyor.Handle(clst.InitiateSignature, clh.InitiateSignature))
-	g.RegisterHandler(clst.InitiatePayment, gonveyor.Handle(clst.InitiatePayment, clh.InitiatePayment))
-	g.RegisterHandler(clst.BundleContractDocs, gonveyor.Handle(clst.BundleContractDocs, clh.BundleContractDocs))
-	g.RegisterHandler(clst.CreateContract, gonveyor.Handle(clst.CreateContract, clh.CreateContract))
-	g.RegisterHandler(clst.CheckContractRenewal, gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal))
+	reg.RegisterLauncher(clbp.QuoteLifecycleLauncher)
+	reg.RegisterLauncher(clbp.RenewalLauncher)
+	reg.RegisterLauncher(clbp.ScanLauncher)
+	reg.RegisterHandler(clst.ScanContractRenewals, gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)))
+	docHandler := gonveyor.HandleFunc(clh.GenerateDocument)
+	reg.RegisterHandler(clst.GenerateQuoteDoc, docHandler)
+	reg.RegisterHandler(clst.GenerateContractDoc, docHandler)
+	emailHandler := gonveyor.HandleFunc(clh.SendEmail)
+	reg.RegisterHandler(clst.SendQuoteEmail, emailHandler)
+	reg.RegisterHandler(clst.SendContractEmail, emailHandler)
+	crmHandler := gonveyor.HandleFunc(clh.SyncCrm)
+	reg.RegisterHandler(clst.SyncCrmQuote, crmHandler)
+	reg.RegisterHandler(clst.SyncCrmContract, crmHandler)
+	reg.RegisterHandler(clst.InitiateSignature, gonveyor.Handle(clst.InitiateSignature, clh.InitiateSignature))
+	reg.RegisterHandler(clst.InitiatePayment, gonveyor.Handle(clst.InitiatePayment, clh.InitiatePayment))
+	reg.RegisterHandler(clst.BundleContractDocs, gonveyor.Handle(clst.BundleContractDocs, clh.BundleContractDocs))
+	reg.RegisterHandler(clst.CreateContract, gonveyor.Handle(clst.CreateContract, clh.CreateContract))
+	reg.RegisterHandler(clst.CheckContractRenewal, gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal))
+
+	opts := []gonveyor.Option{
+		gonveyor.WithRegistry(reg),
+		gonveyor.WithBlueprintProducer(),
+		gonveyor.WithScheduler(),
+		gonveyor.WithLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))),
+	}
+	if len(routingKeys) > 0 {
+		opts = append(opts, gonveyor.WithRoutingKeys(routingKeys...))
+	}
+	g := gonveyor.NewGonveyor(db, opts...)
 
 	ctx, stop := ossignal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()

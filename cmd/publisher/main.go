@@ -14,8 +14,6 @@ import (
 	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
 	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
 	"github.com/terapps/gonveyor/ledger"
-	bunledger "github.com/terapps/gonveyor/ledger/bun"
-	"github.com/terapps/gonveyor/transport/pg"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -25,7 +23,7 @@ const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor
 
 func buildGonductor() (*gonveyor.Gonductor, func(), error) {
 	db := openDB()
-	return gonveyor.NewGonductor(bunledger.New(db)), func() { _ = db.Close() }, nil
+	return gonveyor.NewGonductor(db), func() { _ = db.Close() }, nil
 }
 
 func openDB() *bun.DB {
@@ -192,10 +190,13 @@ func runScheduleContractRenewalScan(ctx context.Context, args []string) {
 	cronExpr := fs.String("cron", "0 9 * * *", `cron expression, standard 5-field or "@every 1h30m"`)
 	_ = fs.Parse(args)
 
-	db := openDB()
-	defer func() { _ = db.Close() }()
+	gc, cleanup, err := buildGonductor()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cleanup()
 
-	id, err := pg.CreateSchedule(ctx, db, "contract_renewal_scan", *cronExpr, []byte(`{}`))
+	id, err := gc.CreateSchedule(ctx, "contract_renewal_scan", *cronExpr, map[string]any{})
 	if err != nil {
 		log.Fatal(err)
 	}
