@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"log"
 	"os"
@@ -46,7 +45,6 @@ commands:
   quote-lifecycle                  submit a full quote → contract lifecycle workflow
   contract-renewal                 submit a standalone contract renewal reminder
   schedule-contract-renewal-scan   register the recurring contract renewal scan
-  signal                           send a signal to an existing blueprint
 
 flags:
   simple:
@@ -68,11 +66,6 @@ flags:
 
   schedule-contract-renewal-scan:
     -cron  string  cron expression, standard 5-field or "@every 1h30m" (default: "0 9 * * *")
-
-  signal:
-    -blueprint-id  string  blueprint instance ID (required)
-    -key           string  signal key, e.g. await_signature (required)
-    -payload       string  JSON payload (default: {})
 `
 
 func main() {
@@ -84,10 +77,6 @@ func main() {
 	cmd := os.Args[1]
 	args := os.Args[2:]
 
-	if cmd == "signal" {
-		runSignal(ctx, args)
-		return
-	}
 	if cmd == "schedule-contract-renewal-scan" {
 		runScheduleContractRenewalScan(ctx, args)
 		return
@@ -152,34 +141,6 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("blueprint %s (%s) launched", manifest.Blueprint.ID, manifest.Blueprint.Name)
-}
-
-func runSignal(ctx context.Context, args []string) {
-	fs := flag.NewFlagSet("signal", flag.ExitOnError)
-	blueprintID := fs.String("blueprint-id", "", "blueprint instance ID (required)")
-	key := fs.String("key", "", "signal key (required)")
-	payloadStr := fs.String("payload", "{}", "JSON payload")
-	_ = fs.Parse(args)
-
-	if *blueprintID == "" || *key == "" {
-		log.Fatal("signal requires -blueprint-id and -key")
-	}
-
-	var payload any
-	if err := json.Unmarshal([]byte(*payloadStr), &payload); err != nil {
-		log.Fatalf("invalid JSON payload: %v", err)
-	}
-
-	gc, cleanup, err := buildGonductor()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cleanup()
-
-	if err := gc.SendSignal(ctx, *blueprintID, *key, payload); err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("signal %q sent to blueprint %s", *key, *blueprintID)
 }
 
 // runScheduleContractRenewalScan registers the recurring contract_renewal_scan launch —

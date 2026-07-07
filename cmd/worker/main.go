@@ -89,6 +89,7 @@ func main() {
 		gonveyor.WithRegistry(reg),
 		gonveyor.WithBlueprintProducer(),
 		gonveyor.WithScheduler(),
+		gonveyor.WithDiscovery(),
 		gonveyor.WithLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))),
 	}
 	if len(routingKeys) > 0 {
