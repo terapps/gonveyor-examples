@@ -43,6 +43,7 @@ func main() {
 	var routingKeys routingKeysFlag
 	flag.Var(&routingKeys, "routing-keys", "routing keys to poll, repeatable and/or comma-separated (default: gonveyor.default only)")
 	flag.Var(&routingKeys, "k", "shorthand for -routing-keys")
+	name := flag.String("name", "", "worker name recorded in worker_instances")
 	flag.Parse()
 
 	db := openDB()
@@ -92,6 +93,9 @@ func main() {
 	}
 	if len(routingKeys) > 0 {
 		opts = append(opts, gonveyor.WithRoutingKeys(routingKeys...))
+	}
+	if *name != "" {
+		opts = append(opts, gonveyor.WithName(*name))
 	}
 	g := gonveyor.NewGonveyor(db, opts...)
 
