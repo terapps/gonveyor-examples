@@ -16,7 +16,7 @@ package blueprint
 import (
 	"github.com/terapps/gonveyor"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor/ledger"
+	"github.com/terapps/gonveyor/core"
 )
 
 var QuoteLifecycle = gonveyor.New("quote_lifecycle",
@@ -158,6 +158,6 @@ var QuoteLifecycleLauncher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p 
 	}
 })
 
-func Manifest(p Params) (ledger.BlueprintManifest, error) {
+func Manifest(p Params) (core.BlueprintManifest, error) {
 	return QuoteLifecycleLauncher.Manifest(p)
 }
