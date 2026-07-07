@@ -1,4 +1,4 @@
-.PHONY: build worker publisher dev dev-documents fmt clean
+.PHONY: build worker publisher dev dev-documents load fmt clean
 
 build:
 	go build ./...
@@ -14,6 +14,9 @@ dev:
 
 dev-documents:
 	air -build.args_bin "-k tasks.document -name documents"
+
+load:
+	./scripts/simulate-load.sh
 
 fmt:
 	gofmt -w .
