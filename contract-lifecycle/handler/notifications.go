@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"strings"
+	"time"
 
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 )
@@ -30,6 +32,7 @@ var templates = map[st.EmailTemplate]emailTemplate{
 }
 
 func SendEmail(_ context.Context, in st.SendEmailInput) (st.SendEmailOutput, error) {
+	time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 	tmpl, ok := templates[in.Template]
 	if !ok {
 		return st.SendEmailOutput{}, fmt.Errorf("unknown email template %q", in.Template)

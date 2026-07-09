@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"time"
 
 	"github.com/terapps/gonveyor"
 	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
@@ -39,6 +40,7 @@ func findDueContracts() []dueContract {
 // not the launch_requests mailbox, since the scan already has the ManifestBuilder.
 func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 	return func(ctx context.Context, _ st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
+		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 		due := findDueContracts()
 		for _, c := range due {
 			manifest, err := clbp.RenewalLauncher.Manifest(st.CheckContractRenewalInput{
