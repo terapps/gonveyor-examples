@@ -14,7 +14,6 @@ package blueprint
 import (
 	"github.com/terapps/gonveyor"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor/core"
 )
 
 var ContractRenewal = gonveyor.New("contract_renewal",
@@ -46,7 +45,7 @@ var ContractRenewal = gonveyor.New("contract_renewal",
 	),
 )
 
-var RenewalLauncher = gonveyor.NewManifestBuilder(ContractRenewal, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
+var RenewalTemplate = gonveyor.NewLaunchTemplate(ContractRenewal, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
 	return []gonveyor.ManifestOption{
 		gonveyor.Seed(st.CheckContractRenewal, p),
 		gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
@@ -60,7 +59,3 @@ var RenewalLauncher = gonveyor.NewManifestBuilder(ContractRenewal, func(p st.Che
 		}),
 	}
 })
-
-func RenewalManifest(p st.CheckContractRenewalInput) (core.BlueprintManifest, error) {
-	return RenewalLauncher.Manifest(p)
-}

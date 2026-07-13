@@ -95,17 +95,17 @@ func main() {
 		clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)),
 	})
 
-	launchers := []gonveyor.AnyManifestBuilder{
-		sbp.Launcher,
-		tbp.Launcher,
-		clbp.QuoteLifecycleLauncher,
-		clbp.RenewalLauncher,
-		clbp.ScanLauncher,
+	templates := []gonveyor.AnyLaunchTemplate{
+		sbp.Template,
+		tbp.Template,
+		clbp.QuoteLifecycleTemplate,
+		clbp.RenewalTemplate,
+		clbp.ScanTemplate,
 	}
 
 	opts := []gonveyor.Option{
 		gonveyor.WithRegistry(reg),
-		gonveyor.WithBlueprintProducer(launchers),
+		gonveyor.WithBlueprintProducer(templates),
 		gonveyor.WithScheduler(),
 		gonveyor.WithDiscovery(),
 		gonveyor.WithLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))),

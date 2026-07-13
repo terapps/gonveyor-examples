@@ -111,7 +111,7 @@ func main() {
 		email := fs.String("email", "client@example.com", "client email")
 		amount := fs.Float64("amount", 100, "quote amount")
 		_ = fs.Parse(args)
-		manifest, err = clbp.Manifest(clbp.Params{
+		manifest, err = clbp.QuoteLifecycleTemplate.Manifest(clbp.Params{
 			QuoteID:          *quoteID,
 			ClientEmail:      *email,
 			Amount:           *amount,
@@ -124,7 +124,7 @@ func main() {
 		contractID := fs.String("contract-id", "contract-1", "contract ID")
 		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
-		manifest, err = clbp.RenewalManifest(clst.CheckContractRenewalInput{
+		manifest, err = clbp.RenewalTemplate.Manifest(clst.CheckContractRenewalInput{
 			ContractID:  *contractID,
 			ClientEmail: *email,
 		})

@@ -16,7 +16,6 @@ package blueprint
 import (
 	"github.com/terapps/gonveyor"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	"github.com/terapps/gonveyor/core"
 )
 
 var QuoteLifecycle = gonveyor.New("quote_lifecycle",
@@ -113,7 +112,7 @@ type Params struct {
 	ContractDocTypes []string `validate:"required,min=1"` // e.g. ["contract", "annex_a"]
 }
 
-var QuoteLifecycleLauncher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p Params) []gonveyor.ManifestOption {
+var QuoteLifecycleTemplate = gonveyor.NewLaunchTemplate(QuoteLifecycle, func(p Params) []gonveyor.ManifestOption {
 	return []gonveyor.ManifestOption{
 		// N quote documents dispatched in parallel
 		gonveyor.Seeds(st.GenerateQuoteDoc, p.QuoteDocTypes, func(docType string, in *st.DocumentInput) {
@@ -157,7 +156,3 @@ var QuoteLifecycleLauncher = gonveyor.NewManifestBuilder(QuoteLifecycle, func(p 
 		}),
 	}
 })
-
-func Manifest(p Params) (core.BlueprintManifest, error) {
-	return QuoteLifecycleLauncher.Manifest(p)
-}

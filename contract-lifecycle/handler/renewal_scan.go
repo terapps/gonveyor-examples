@@ -37,13 +37,13 @@ func findDueContracts() []dueContract {
 
 // NewScanContractRenewals returns the ScanContractRenewals handler, closing over gc to
 // launch one contract_renewal sub-blueprint per contract found due — a direct Launch,
-// not the launch_requests mailbox, since the scan already has the ManifestBuilder.
+// not the launch_requests mailbox, since the scan already has the LaunchTemplate.
 func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 	return func(ctx context.Context, _ st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 		due := findDueContracts()
 		for _, c := range due {
-			manifest, err := clbp.RenewalLauncher.Manifest(st.CheckContractRenewalInput{
+			manifest, err := clbp.RenewalTemplate.Manifest(st.CheckContractRenewalInput{
 				ContractID:  c.ContractID,
 				ClientEmail: c.ClientEmail,
 			})
