@@ -157,7 +157,11 @@ func runScheduleContractRenewalScan(ctx context.Context, args []string) {
 	}
 	defer cleanup()
 
-	id, err := gc.CreateSchedule(ctx, "contract_renewal_scan", *cronExpr, map[string]any{})
+	id, err := gc.CreateSchedule(ctx, gonveyor.CreateScheduleInput{
+		BlueprintName: "contract_renewal_scan",
+		CronExpr:      *cronExpr,
+		Params:        map[string]any{},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
