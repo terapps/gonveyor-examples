@@ -52,14 +52,10 @@ func main() {
 	gc := gonveyor.NewGonductor(db)
 	reg := gonveyor.NewStationRegistry()
 
-	// simple — RegisterBlueprint takes the wiring + every handler this worker runs for it in
-	// one call; RegisterLauncher stays separate, only needed here because this same binary
-	// also runs BlueprintProducer (see roadmap: a producer-only master would call only
-	// RegisterLauncher, a pure worker only RegisterBlueprint).
+	// simple
 	reg.RegisterBlueprint(sbp.SimpleDispatch, gonveyor.Handlers{
 		sst.SendWelcome: gonveyor.Handle(sst.SendWelcome, sh.SendWelcome),
 	})
-	reg.RegisterLauncher(sbp.Launcher)
 
 	// transcoding
 	reg.RegisterBlueprint(tbp.Transcoding, gonveyor.Handlers{
@@ -69,12 +65,8 @@ func main() {
 		tst.ExtractAudio: gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio),
 		tst.Package:      gonveyor.Handle(tst.Package, th.Package),
 	})
-	reg.RegisterLauncher(tbp.Launcher)
 
-	// contract lifecycle — shared handlers, referenced from both blueprints' Handlers maps
-	// below (quote_lifecycle's phase-2 reuses the same doc/email/crm handlers as the
-	// independent contract_renewal blueprint; RegisterBlueprint validates each key against
-	// its own blueprint's wiring, so reusing the same handler/def pair across two calls is fine)
+	// contract lifecycle — shared handlers
 	docHandler := gonveyor.HandleFunc(clh.GenerateDocument)
 	emailHandler := gonveyor.HandleFunc(clh.SendEmail)
 	crmHandler := gonveyor.HandleFunc(clh.SyncCrm)
@@ -91,7 +83,6 @@ func main() {
 		clst.BundleContractDocs:  gonveyor.Handle(clst.BundleContractDocs, clh.BundleContractDocs),
 		clst.CreateContract:      gonveyor.Handle(clst.CreateContract, clh.CreateContract),
 	})
-	reg.RegisterLauncher(clbp.QuoteLifecycleLauncher)
 
 	reg.RegisterBlueprint(clbp.ContractRenewal, gonveyor.Handlers{
 		clst.GenerateContractDoc:  docHandler,
@@ -99,16 +90,22 @@ func main() {
 		clst.SyncCrmContract:      crmHandler,
 		clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal),
 	})
-	reg.RegisterLauncher(clbp.RenewalLauncher)
 
 	reg.RegisterBlueprint(clbp.ContractRenewalScan, gonveyor.Handlers{
 		clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)),
 	})
-	reg.RegisterLauncher(clbp.ScanLauncher)
+
+	launchers := []gonveyor.AnyManifestBuilder{
+		sbp.Launcher,
+		tbp.Launcher,
+		clbp.QuoteLifecycleLauncher,
+		clbp.RenewalLauncher,
+		clbp.ScanLauncher,
+	}
 
 	opts := []gonveyor.Option{
 		gonveyor.WithRegistry(reg),
-		gonveyor.WithBlueprintProducer(),
+		gonveyor.WithBlueprintProducer(launchers),
 		gonveyor.WithScheduler(),
 		gonveyor.WithDiscovery(),
 		gonveyor.WithLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))),
