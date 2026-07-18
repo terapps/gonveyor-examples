@@ -12,19 +12,19 @@ import (
 	"syscall"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
-	clh "github.com/terapps/gonveyor-examples/contract-lifecycle/handler"
-	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	"github.com/terapps/gonveyor-examples/contracts"
+	clh "github.com/terapps/gonveyor-examples/contracts/handler"
+	clst "github.com/terapps/gonveyor-examples/contracts/stations"
 	sh "github.com/terapps/gonveyor-examples/simple/handler"
 	sst "github.com/terapps/gonveyor-examples/simple/stations"
-	tbp "github.com/terapps/gonveyor-examples/transcoding"
+	"github.com/terapps/gonveyor-examples/transcoding"
 	th "github.com/terapps/gonveyor-examples/transcoding/handler"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 
-	sbp "github.com/terapps/gonveyor-examples/simple"
+	"github.com/terapps/gonveyor-examples/simple"
 )
 
 const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"
@@ -53,12 +53,12 @@ func main() {
 	reg := gonveyor.NewStationRegistry()
 
 	// simple
-	reg.RegisterBlueprint(sbp.SimpleDispatch, gonveyor.Handlers{
+	reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
 		sst.SendWelcome: gonveyor.Handle(sst.SendWelcome, sh.SendWelcome),
 	})
 
 	// transcoding
-	reg.RegisterBlueprint(tbp.Transcoding, gonveyor.Handlers{
+	reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
 		tst.Download:     gonveyor.Handle(tst.Download, th.Download),
 		tst.Transcode:    gonveyor.Handle(tst.Transcode, th.Transcode),
 		tst.Thumbnail:    gonveyor.Handle(tst.Thumbnail, th.Thumbnail),
@@ -71,7 +71,7 @@ func main() {
 	emailHandler := gonveyor.HandleFunc(clh.SendEmail)
 	crmHandler := gonveyor.HandleFunc(clh.SyncCrm)
 
-	reg.RegisterBlueprint(clbp.QuoteLifecycle, gonveyor.Handlers{
+	reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
 		clst.GenerateQuoteDoc:    docHandler,
 		clst.SendQuoteEmail:      emailHandler,
 		clst.SyncCrmQuote:        crmHandler,
@@ -84,23 +84,23 @@ func main() {
 		clst.CreateContract:      gonveyor.Handle(clst.CreateContract, clh.CreateContract),
 	})
 
-	reg.RegisterBlueprint(clbp.ContractRenewal, gonveyor.Handlers{
+	reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
 		clst.GenerateContractDoc:  docHandler,
 		clst.SendContractEmail:    emailHandler,
 		clst.SyncCrmContract:      crmHandler,
 		clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal),
 	})
 
-	reg.RegisterBlueprint(clbp.ContractRenewalScan, gonveyor.Handlers{
+	reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
 		clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)),
 	})
 
 	templates := []gonveyor.AnyLaunchTemplate{
-		sbp.Template,
-		tbp.Template,
-		clbp.QuoteLifecycleTemplate,
-		clbp.RenewalTemplate,
-		clbp.ScanTemplate,
+		simple.Template,
+		transcoding.Template,
+		contracts.QuoteLifecycleTemplate,
+		contracts.RenewalTemplate,
+		contracts.ScanTemplate,
 	}
 
 	opts := []gonveyor.Option{

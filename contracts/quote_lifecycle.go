@@ -1,4 +1,4 @@
-package contractlifecycle
+package contracts
 
 // Workflow: Création d'un Devis
 //
@@ -15,7 +15,7 @@ package contractlifecycle
 
 import (
 	"github.com/terapps/gonveyor"
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 var QuoteLifecycle = gonveyor.New("quote_lifecycle",

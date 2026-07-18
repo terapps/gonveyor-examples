@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	"github.com/terapps/gonveyor-examples/contracts"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 // dueContract stubs what a real CRM/contracts query would return: contracts whose end
@@ -45,7 +45,7 @@ func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.Sc
 		due := findDueContracts()
 		manifests := make([]gonveyor.BlueprintManifest, len(due))
 		for i, c := range due {
-			manifest, err := clbp.RenewalTemplate.Manifest(st.CheckContractRenewalInput{
+			manifest, err := contracts.RenewalTemplate.Manifest(st.CheckContractRenewalInput{
 				ContractID:  c.ContractID,
 				ClientEmail: c.ClientEmail,
 			})

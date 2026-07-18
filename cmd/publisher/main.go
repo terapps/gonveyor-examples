@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
-	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	sbp "github.com/terapps/gonveyor-examples/simple"
-	tbp "github.com/terapps/gonveyor-examples/transcoding"
+	"github.com/terapps/gonveyor-examples/contracts"
+	clst "github.com/terapps/gonveyor-examples/contracts/stations"
+	"github.com/terapps/gonveyor-examples/simple"
+	"github.com/terapps/gonveyor-examples/transcoding"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -95,14 +95,14 @@ func main() {
 		userID := fs.String("user-id", "user-1", "user ID")
 		email := fs.String("email", "user@example.com", "email address")
 		_ = fs.Parse(args)
-		manifest, err = sbp.Manifest(*userID, *email)
+		manifest, err = simple.Manifest(*userID, *email)
 
 	case "transcoding":
 		fs := flag.NewFlagSet("transcoding", flag.ExitOnError)
 		assetID := fs.String("asset-id", "asset-1", "asset ID")
 		sourceURL := fs.String("source-url", "s3://bucket/video.mp4", "source URL")
 		_ = fs.Parse(args)
-		manifest, err = tbp.Manifest(*assetID, *sourceURL)
+		manifest, err = transcoding.Manifest(*assetID, *sourceURL)
 
 	case "quote-lifecycle":
 		fs := flag.NewFlagSet("quote-lifecycle", flag.ExitOnError)
@@ -110,7 +110,7 @@ func main() {
 		email := fs.String("email", "client@example.com", "client email")
 		amount := fs.Float64("amount", 100, "quote amount")
 		_ = fs.Parse(args)
-		manifest, err = clbp.QuoteLifecycleTemplate.Manifest(clbp.Params{
+		manifest, err = contracts.QuoteLifecycleTemplate.Manifest(contracts.Params{
 			QuoteID:          *quoteID,
 			ClientEmail:      *email,
 			Amount:           *amount,
@@ -123,7 +123,7 @@ func main() {
 		contractID := fs.String("contract-id", "contract-1", "contract ID")
 		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
-		manifest, err = clbp.RenewalTemplate.Manifest(clst.CheckContractRenewalInput{
+		manifest, err = contracts.RenewalTemplate.Manifest(clst.CheckContractRenewalInput{
 			ContractID:  *contractID,
 			ClientEmail: *email,
 		})

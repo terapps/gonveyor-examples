@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 type emailTemplate struct {

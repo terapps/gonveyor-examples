@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 // CheckContractRenewal simulates detecting that a contract is nearing its expiry date

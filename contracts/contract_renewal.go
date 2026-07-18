@@ -1,4 +1,4 @@
-package contractlifecycle
+package contracts
 
 // Workflow: Renouvellement de contrat
 //
@@ -13,7 +13,7 @@ package contractlifecycle
 
 import (
 	"github.com/terapps/gonveyor"
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 var ContractRenewal = gonveyor.New("contract_renewal",

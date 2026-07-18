@@ -1,4 +1,4 @@
-package contractlifecycle
+package contracts
 
 // Its own blueprint, independent of ContractRenewal: one recurring schedule (see
 // cmd/publisher schedule-contract-renewal-scan) dispatches ScanContractRenewals, whose
@@ -8,7 +8,7 @@ package contractlifecycle
 
 import (
 	"github.com/terapps/gonveyor"
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 var ContractRenewalScan = gonveyor.New("contract_renewal_scan", st.ScanContractRenewals)

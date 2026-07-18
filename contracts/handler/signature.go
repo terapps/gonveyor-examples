@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 func InitiateSignature(_ context.Context, in st.InitiateSignatureInput) (st.InitiateSignatureOutput, error) {

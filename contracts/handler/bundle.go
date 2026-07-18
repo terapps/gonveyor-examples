@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 func BundleContractDocs(_ context.Context, in st.BundleContractDocsInput) (st.BundleContractDocsOutput, error) {

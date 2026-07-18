@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 func InitiatePayment(_ context.Context, in st.InitiatePaymentInput) (st.InitiatePaymentOutput, error) {
