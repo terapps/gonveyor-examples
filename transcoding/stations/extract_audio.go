@@ -1,4 +1,4 @@
-package transcoding
+package stations
 
 import (
 	"context"

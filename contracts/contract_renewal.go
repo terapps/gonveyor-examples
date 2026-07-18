@@ -13,47 +13,48 @@ package contracts
 
 import (
 	"github.com/terapps/gonveyor"
+	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
 var ContractRenewal = gonveyor.New("contract_renewal",
-	CheckContractRenewal, // root — dispatched via Seed at manifest time
+	st.CheckContractRenewal, // root — dispatched via Seed at manifest time
 
-	gonveyor.Wire(GenerateContractDoc,
-		gonveyor.Intake(CheckContractRenewal, func(o CheckContractRenewalOutput, in *DocumentInput) {
+	gonveyor.Wire(st.GenerateContractDoc,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.DocumentInput) {
 			in.EntityID = o.ContractID
 		}),
 	),
 
-	gonveyor.Wire(SendContractEmail,
-		gonveyor.Intake(CheckContractRenewal, func(o CheckContractRenewalOutput, in *SendEmailInput) {
+	gonveyor.Wire(st.SendContractEmail,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SendEmailInput) {
 			in.To = o.ClientEmail
 			in.Vars = map[string]string{"renewal_url": o.RenewalURL}
 		}),
-		gonveyor.Intake(GenerateContractDoc, func(o DocumentOutput, in *SendEmailInput) {
+		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SendEmailInput) {
 			in.DocURLs = []string{o.DocURL}
 		}),
 	),
 
-	gonveyor.Wire(SyncCrmContract,
-		gonveyor.Intake(CheckContractRenewal, func(o CheckContractRenewalOutput, in *SyncCrmInput) {
+	gonveyor.Wire(st.SyncCrmContract,
+		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SyncCrmInput) {
 			in.EntityID = o.ContractID
 		}),
-		gonveyor.Intake(GenerateContractDoc, func(o DocumentOutput, in *SyncCrmInput) {
+		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SyncCrmInput) {
 			in.DocURLs = []string{o.DocURL}
 		}),
 	),
 )
 
-var RenewalTemplate = gonveyor.NewLaunchTemplate(ContractRenewal, func(p CheckContractRenewalInput) []gonveyor.ManifestOption {
+var RenewalTemplate = gonveyor.NewLaunchTemplate(ContractRenewal, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
 	return []gonveyor.ManifestOption{
-		gonveyor.Seed(CheckContractRenewal, p),
-		gonveyor.Seed(GenerateContractDoc, DocumentInput{
+		gonveyor.Seed(st.CheckContractRenewal, p),
+		gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
 			DocType: "renewal",
 		}),
-		gonveyor.Seed(SendContractEmail, SendEmailInput{
-			Template: TemplateContractRenewal,
+		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+			Template: st.TemplateContractRenewal,
 		}),
-		gonveyor.Seed(SyncCrmContract, SyncCrmInput{
+		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
 			EntityType: "contract",
 		}),
 	}

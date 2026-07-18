@@ -9,6 +9,7 @@ import (
 
 	"github.com/terapps/gonveyor"
 	"github.com/terapps/gonveyor-examples/contracts"
+	clst "github.com/terapps/gonveyor-examples/contracts/stations"
 	"github.com/terapps/gonveyor-examples/simple"
 	"github.com/terapps/gonveyor-examples/transcoding"
 	"github.com/uptrace/bun"
@@ -122,7 +123,7 @@ func main() {
 		contractID := fs.String("contract-id", "contract-1", "contract ID")
 		email := fs.String("email", "client@example.com", "client email")
 		_ = fs.Parse(args)
-		manifest, err = contracts.RenewalTemplate.Manifest(contracts.CheckContractRenewalInput{
+		manifest, err = contracts.RenewalTemplate.Manifest(clst.CheckContractRenewalInput{
 			ContractID:  *contractID,
 			ClientEmail: *email,
 		})
