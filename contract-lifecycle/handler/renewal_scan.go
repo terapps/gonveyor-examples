@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
+	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
 	st "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 )
 

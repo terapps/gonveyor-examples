@@ -1,4 +1,4 @@
-package blueprint
+package simple
 
 import (
 	"github.com/terapps/gonveyor"

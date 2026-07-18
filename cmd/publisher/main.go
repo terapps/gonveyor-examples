@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
+	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
 	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
-	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
-	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
+	sbp "github.com/terapps/gonveyor-examples/simple"
+	tbp "github.com/terapps/gonveyor-examples/transcoding"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"

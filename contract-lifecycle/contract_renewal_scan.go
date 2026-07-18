@@ -1,4 +1,4 @@
-package blueprint
+package contractlifecycle
 
 // Its own blueprint, independent of ContractRenewal: one recurring schedule (see
 // cmd/publisher schedule-contract-renewal-scan) dispatches ScanContractRenewals, whose

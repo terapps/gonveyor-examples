@@ -1,4 +1,4 @@
-package blueprint
+package transcoding
 
 import (
 	"github.com/terapps/gonveyor"

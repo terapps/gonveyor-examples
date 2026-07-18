@@ -12,19 +12,19 @@ import (
 	"syscall"
 
 	"github.com/terapps/gonveyor"
-	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle/blueprint"
+	clbp "github.com/terapps/gonveyor-examples/contract-lifecycle"
 	clh "github.com/terapps/gonveyor-examples/contract-lifecycle/handler"
 	clst "github.com/terapps/gonveyor-examples/contract-lifecycle/stations"
 	sh "github.com/terapps/gonveyor-examples/simple/handler"
 	sst "github.com/terapps/gonveyor-examples/simple/stations"
-	tbp "github.com/terapps/gonveyor-examples/transcoding/blueprint"
+	tbp "github.com/terapps/gonveyor-examples/transcoding"
 	th "github.com/terapps/gonveyor-examples/transcoding/handler"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 
-	sbp "github.com/terapps/gonveyor-examples/simple/blueprint"
+	sbp "github.com/terapps/gonveyor-examples/simple"
 )
 
 const defaultPostgresDSN = "postgres://gonveyor:gonveyor@localhost:5432/gonveyor?sslmode=disable"

@@ -1,4 +1,4 @@
-package blueprint
+package contractlifecycle
 
 // Workflow: Création d'un Devis
 //
