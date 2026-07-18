@@ -15,8 +15,6 @@ import (
 	"github.com/terapps/gonveyor-examples/contracts"
 	clh "github.com/terapps/gonveyor-examples/contracts/handler"
 	clst "github.com/terapps/gonveyor-examples/contracts/stations"
-	sh "github.com/terapps/gonveyor-examples/simple/handler"
-	sst "github.com/terapps/gonveyor-examples/simple/stations"
 	"github.com/terapps/gonveyor-examples/transcoding"
 	th "github.com/terapps/gonveyor-examples/transcoding/handler"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
@@ -54,7 +52,7 @@ func main() {
 
 	// simple
 	reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
-		sst.SendWelcome: gonveyor.Handle(sst.SendWelcome, sh.SendWelcome),
+		simple.SendWelcome: gonveyor.Handle(simple.SendWelcome, simple.HandleWelcome),
 	})
 
 	// transcoding
