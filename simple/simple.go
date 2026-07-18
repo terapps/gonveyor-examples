@@ -3,11 +3,6 @@
 package simple
 
 import (
-	"context"
-	"log/slog"
-	"math/rand"
-	"time"
-
 	"github.com/terapps/gonveyor"
 )
 
@@ -34,12 +29,4 @@ var Template = gonveyor.NewLaunchTemplate(SimpleDispatch, func(p WelcomeInput) [
 
 func Manifest(userID, email string) (gonveyor.BlueprintManifest, error) {
 	return Template.Manifest(WelcomeInput{UserID: userID, Email: email})
-}
-
-// --- Worker ---
-
-func HandleWelcome(_ context.Context, in WelcomeInput) (WelcomeOutput, error) {
-	time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-	slog.Info("sending welcome email", "user_id", in.UserID, "email", in.Email)
-	return WelcomeOutput{SentAt: time.Now().Format(time.RFC3339)}, nil
 }
