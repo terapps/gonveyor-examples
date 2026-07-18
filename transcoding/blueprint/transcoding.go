@@ -3,7 +3,6 @@ package blueprint
 import (
 	"github.com/terapps/gonveyor"
 	st "github.com/terapps/gonveyor-examples/transcoding/stations"
-	"github.com/terapps/gonveyor/core"
 )
 
 // Transcoding: download → [transcode, thumbnail, extract_audio] → package
@@ -48,6 +47,6 @@ var Template = gonveyor.NewLaunchTemplate(Transcoding, func(p st.DownloadInput) 
 	return []gonveyor.ManifestOption{gonveyor.Seed(st.Download, p)}
 })
 
-func Manifest(assetID, sourceURL string) (core.BlueprintManifest, error) {
+func Manifest(assetID, sourceURL string) (gonveyor.BlueprintManifest, error) {
 	return Template.Manifest(st.DownloadInput{AssetID: assetID, SourceURL: sourceURL})
 }

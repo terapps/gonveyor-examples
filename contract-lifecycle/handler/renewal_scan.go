@@ -36,13 +36,15 @@ func findDueContracts() []dueContract {
 }
 
 // NewScanContractRenewals returns the ScanContractRenewals handler, closing over gc to
-// launch one contract_renewal sub-blueprint per contract found due — a direct Launch,
-// not the launch_requests mailbox, since the scan already has the LaunchTemplate.
+// launch one contract_renewal sub-blueprint per contract found due — a single LaunchBatch,
+// not the launch_requests mailbox, since the scan already has the LaunchTemplate. Batching
+// files every sub-blueprint in one transaction instead of N round-trips.
 func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 	return func(ctx context.Context, _ st.ScanRenewalsInput) (st.ScanRenewalsOutput, error) {
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 		due := findDueContracts()
-		for _, c := range due {
+		manifests := make([]gonveyor.BlueprintManifest, len(due))
+		for i, c := range due {
 			manifest, err := clbp.RenewalTemplate.Manifest(st.CheckContractRenewalInput{
 				ContractID:  c.ContractID,
 				ClientEmail: c.ClientEmail,
@@ -50,9 +52,10 @@ func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, st.Sc
 			if err != nil {
 				return st.ScanRenewalsOutput{}, err
 			}
-			if err := gc.Launch(ctx, manifest); err != nil {
-				return st.ScanRenewalsOutput{}, err
-			}
+			manifests[i] = manifest
+		}
+		if err := gc.LaunchBatch(ctx, manifests); err != nil {
+			return st.ScanRenewalsOutput{}, err
 		}
 		slog.Info("contract renewal scan complete", "found", len(due))
 		return st.ScanRenewalsOutput{Found: len(due)}, nil
