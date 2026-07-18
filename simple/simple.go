@@ -36,7 +36,7 @@ func Manifest(userID, email string) (gonveyor.BlueprintManifest, error) {
 	return Template.Manifest(WelcomeInput{UserID: userID, Email: email})
 }
 
-// --- Handler ---
+// --- Worker ---
 
 func HandleWelcome(_ context.Context, in WelcomeInput) (WelcomeOutput, error) {
 	time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)

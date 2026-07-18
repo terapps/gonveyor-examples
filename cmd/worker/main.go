@@ -13,11 +13,7 @@ import (
 
 	"github.com/terapps/gonveyor"
 	"github.com/terapps/gonveyor-examples/contracts"
-	clh "github.com/terapps/gonveyor-examples/contracts/handler"
-	clst "github.com/terapps/gonveyor-examples/contracts/stations"
 	"github.com/terapps/gonveyor-examples/transcoding"
-	th "github.com/terapps/gonveyor-examples/transcoding/handler"
-	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -57,40 +53,40 @@ func main() {
 
 	// transcoding
 	reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
-		tst.Download:     gonveyor.Handle(tst.Download, th.Download),
-		tst.Transcode:    gonveyor.Handle(tst.Transcode, th.Transcode),
-		tst.Thumbnail:    gonveyor.Handle(tst.Thumbnail, th.Thumbnail),
-		tst.ExtractAudio: gonveyor.Handle(tst.ExtractAudio, th.ExtractAudio),
-		tst.Package:      gonveyor.Handle(tst.Package, th.Package),
+		transcoding.Download:     gonveyor.Handle(transcoding.Download, transcoding.HandleDownload),
+		transcoding.Transcode:    gonveyor.Handle(transcoding.Transcode, transcoding.HandleTranscode),
+		transcoding.Thumbnail:    gonveyor.Handle(transcoding.Thumbnail, transcoding.HandleThumbnail),
+		transcoding.ExtractAudio: gonveyor.Handle(transcoding.ExtractAudio, transcoding.HandleExtractAudio),
+		transcoding.Package:      gonveyor.Handle(transcoding.Package, transcoding.HandlePackage),
 	})
 
 	// contract lifecycle — shared handlers
-	docHandler := gonveyor.HandleFunc(clh.GenerateDocument)
-	emailHandler := gonveyor.HandleFunc(clh.SendEmail)
-	crmHandler := gonveyor.HandleFunc(clh.SyncCrm)
+	docHandler := gonveyor.HandleFunc(contracts.HandleDocument)
+	emailHandler := gonveyor.HandleFunc(contracts.HandleEmail)
+	crmHandler := gonveyor.HandleFunc(contracts.HandleCrm)
 
 	reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
-		clst.GenerateQuoteDoc:    docHandler,
-		clst.SendQuoteEmail:      emailHandler,
-		clst.SyncCrmQuote:        crmHandler,
-		clst.GenerateContractDoc: docHandler,
-		clst.SendContractEmail:   emailHandler,
-		clst.SyncCrmContract:     crmHandler,
-		clst.InitiateSignature:   gonveyor.Handle(clst.InitiateSignature, clh.InitiateSignature),
-		clst.InitiatePayment:     gonveyor.Handle(clst.InitiatePayment, clh.InitiatePayment),
-		clst.BundleContractDocs:  gonveyor.Handle(clst.BundleContractDocs, clh.BundleContractDocs),
-		clst.CreateContract:      gonveyor.Handle(clst.CreateContract, clh.CreateContract),
+		contracts.GenerateQuoteDoc:    docHandler,
+		contracts.SendQuoteEmail:      emailHandler,
+		contracts.SyncCrmQuote:        crmHandler,
+		contracts.GenerateContractDoc: docHandler,
+		contracts.SendContractEmail:   emailHandler,
+		contracts.SyncCrmContract:     crmHandler,
+		contracts.InitiateSignature:   gonveyor.Handle(contracts.InitiateSignature, contracts.HandleInitiateSignature),
+		contracts.InitiatePayment:     gonveyor.Handle(contracts.InitiatePayment, contracts.HandleInitiatePayment),
+		contracts.BundleContractDocs:  gonveyor.Handle(contracts.BundleContractDocs, contracts.HandleBundleContractDocs),
+		contracts.CreateContract:      gonveyor.Handle(contracts.CreateContract, contracts.HandleCreateContract),
 	})
 
 	reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
-		clst.GenerateContractDoc:  docHandler,
-		clst.SendContractEmail:    emailHandler,
-		clst.SyncCrmContract:      crmHandler,
-		clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, clh.CheckContractRenewal),
+		contracts.GenerateContractDoc:  docHandler,
+		contracts.SendContractEmail:    emailHandler,
+		contracts.SyncCrmContract:      crmHandler,
+		contracts.CheckContractRenewal: gonveyor.Handle(contracts.CheckContractRenewal, contracts.HandleCheckContractRenewal),
 	})
 
 	reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
-		clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, clh.NewScanContractRenewals(gc)),
+		contracts.ScanContractRenewals: gonveyor.Handle(contracts.ScanContractRenewals, contracts.NewScanContractRenewals(gc)),
 	})
 
 	templates := []gonveyor.AnyLaunchTemplate{

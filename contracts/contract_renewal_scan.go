@@ -8,11 +8,10 @@ package contracts
 
 import (
 	"github.com/terapps/gonveyor"
-	st "github.com/terapps/gonveyor-examples/contracts/stations"
 )
 
-var ContractRenewalScan = gonveyor.New("contract_renewal_scan", st.ScanContractRenewals)
+var ContractRenewalScan = gonveyor.New("contract_renewal_scan", ScanContractRenewals)
 
-var ScanTemplate = gonveyor.NewLaunchTemplate(ContractRenewalScan, func(p st.ScanRenewalsInput) []gonveyor.ManifestOption {
-	return []gonveyor.ManifestOption{gonveyor.Seed(st.ScanContractRenewals, p)}
+var ScanTemplate = gonveyor.NewLaunchTemplate(ContractRenewalScan, func(p ScanRenewalsInput) []gonveyor.ManifestOption {
+	return []gonveyor.ManifestOption{gonveyor.Seed(ScanContractRenewals, p)}
 })
