@@ -47,64 +47,64 @@ func main() {
 	defer func() { _ = db.Close() }()
 
 	gc := gonveyor.NewGonductor(db)
-	reg := gonveyor.NewStationRegistry()
-
-	// simple
-	reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
-		simple.SendWelcome: gonveyor.Handle(simple.SendWelcome, handler.HandleWelcome),
-	})
-
-	// transcoding
-	reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
-		tst.Download:     gonveyor.Handle(tst.Download, handler.HandleDownload),
-		tst.Transcode:    gonveyor.Handle(tst.Transcode, handler.HandleTranscode),
-		tst.Thumbnail:    gonveyor.Handle(tst.Thumbnail, handler.HandleThumbnail),
-		tst.ExtractAudio: gonveyor.Handle(tst.ExtractAudio, handler.HandleExtractAudio),
-		tst.Package:      gonveyor.Handle(tst.Package, handler.HandlePackage),
-	})
 
 	// contract lifecycle — shared handlers
 	docHandler := gonveyor.HandleFunc(handler.HandleDocument)
 	emailHandler := gonveyor.HandleFunc(handler.HandleEmail)
 	crmHandler := gonveyor.HandleFunc(handler.HandleCrm)
 
-	reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
-		clst.GenerateQuoteDoc:    docHandler,
-		clst.SendQuoteEmail:      emailHandler,
-		clst.SyncCrmQuote:        crmHandler,
-		clst.GenerateContractDoc: docHandler,
-		clst.SendContractEmail:   emailHandler,
-		clst.SyncCrmContract:     crmHandler,
-		clst.InitiateSignature:   gonveyor.Handle(clst.InitiateSignature, handler.HandleInitiateSignature),
-		clst.InitiatePayment:     gonveyor.Handle(clst.InitiatePayment, handler.HandleInitiatePayment),
-		clst.BundleContractDocs:  gonveyor.Handle(clst.BundleContractDocs, handler.HandleBundleContractDocs),
-		clst.CreateContract:      gonveyor.Handle(clst.CreateContract, handler.HandleCreateContract),
-	})
+	registerStations := func(reg gonveyor.StationRegistry) {
+		reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
+			simple.SendWelcome: gonveyor.Handle(simple.SendWelcome, handler.HandleWelcome),
+		})
 
-	reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
-		clst.GenerateContractDoc:  docHandler,
-		clst.SendContractEmail:    emailHandler,
-		clst.SyncCrmContract:      crmHandler,
-		clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, handler.HandleCheckContractRenewal),
-	})
+		reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
+			tst.Download:     gonveyor.Handle(tst.Download, handler.HandleDownload),
+			tst.Transcode:    gonveyor.Handle(tst.Transcode, handler.HandleTranscode),
+			tst.Thumbnail:    gonveyor.Handle(tst.Thumbnail, handler.HandleThumbnail),
+			tst.ExtractAudio: gonveyor.Handle(tst.ExtractAudio, handler.HandleExtractAudio),
+			tst.Package:      gonveyor.Handle(tst.Package, handler.HandlePackage),
+		})
 
-	reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
-		clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, handler.NewScanContractRenewals(gc)),
-	})
+		reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
+			clst.GenerateQuoteDoc:    docHandler,
+			clst.SendQuoteEmail:      emailHandler,
+			clst.SyncCrmQuote:        crmHandler,
+			clst.GenerateContractDoc: docHandler,
+			clst.SendContractEmail:   emailHandler,
+			clst.SyncCrmContract:     crmHandler,
+			clst.InitiateSignature:   gonveyor.Handle(clst.InitiateSignature, handler.HandleInitiateSignature),
+			clst.InitiatePayment:     gonveyor.Handle(clst.InitiatePayment, handler.HandleInitiatePayment),
+			clst.BundleContractDocs:  gonveyor.Handle(clst.BundleContractDocs, handler.HandleBundleContractDocs),
+			clst.CreateContract:      gonveyor.Handle(clst.CreateContract, handler.HandleCreateContract),
+		})
 
-	templates := []gonveyor.AnyLaunchTemplate{
-		simple.Template,
-		transcoding.Template,
-		contracts.QuoteLifecycleTemplate,
-		contracts.RenewalTemplate,
-		contracts.ScanTemplate,
+		reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
+			clst.GenerateContractDoc:  docHandler,
+			clst.SendContractEmail:    emailHandler,
+			clst.SyncCrmContract:      crmHandler,
+			clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, handler.HandleCheckContractRenewal),
+		})
+
+		reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
+			clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, handler.NewScanContractRenewals(gc)),
+		})
+	}
+
+	registerTemplates := func(lr gonveyor.LaunchRegistry) {
+		lr.RegisterTemplate(
+			simple.Template,
+			transcoding.Template,
+			contracts.QuoteLifecycleTemplate,
+			contracts.RenewalTemplate,
+			contracts.ScanTemplate,
+		)
 	}
 
 	opts := []gonveyor.Option{
-		gonveyor.WithRegistry(reg),
-		gonveyor.WithBlueprintProducer(templates),
+		gonveyor.WithStationMaster(registerStations),
+		gonveyor.WithBlueprintProducer(registerTemplates),
 		gonveyor.WithScheduler(),
-		gonveyor.WithDiscovery(),
 		gonveyor.WithLogger(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))),
 	}
 	if len(routingKeys) > 0 {
