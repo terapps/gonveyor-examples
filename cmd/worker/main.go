@@ -17,9 +17,7 @@ import (
 	clst "github.com/terapps/gonveyor-examples/contracts/stations"
 	"github.com/terapps/gonveyor-examples/transcoding"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
+	_ "github.com/lib/pq"
 
 	"github.com/terapps/gonveyor-examples/simple"
 )
@@ -124,9 +122,12 @@ func main() {
 	}
 }
 
-func openDB() *bun.DB {
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(envOr("POSTGRES_DSN", defaultPostgresDSN))))
-	return bun.NewDB(sqldb, pgdialect.New())
+func openDB() *sql.DB {
+	db, err := sql.Open("postgres", envOr("POSTGRES_DSN", defaultPostgresDSN))
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	return db
 }
 
 func envOr(key, fallback string) string {
