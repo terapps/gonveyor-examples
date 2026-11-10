@@ -46,47 +46,42 @@ func main() {
 
 	gc := gonveyor.NewGonductor(db)
 
-	// contract lifecycle — shared handlers
-	docHandler := gonveyor.HandleFunc(handler.HandleDocument)
-	emailHandler := gonveyor.HandleFunc(handler.HandleEmail)
-	crmHandler := gonveyor.HandleFunc(handler.HandleCrm)
-
 	registerStations := func(reg gonveyor.StationRegistry) {
-		reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
-			simple.SendWelcome: simple.SendWelcome.Handle(handler.HandleWelcome),
-		})
+		reg.RegisterBlueprint(simple.SimpleDispatch,
+			simple.SendWelcome.Handle(handler.HandleWelcome),
+		)
 
-		reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
-			tst.Download:     tst.Download.Handle(handler.HandleDownload),
-			tst.Transcode:    tst.Transcode.Handle(handler.HandleTranscode),
-			tst.Thumbnail:    tst.Thumbnail.Handle(handler.HandleThumbnail),
-			tst.ExtractAudio: tst.ExtractAudio.Handle(handler.HandleExtractAudio),
-			tst.Package:      tst.Package.Handle(handler.HandlePackage),
-		})
+		reg.RegisterBlueprint(transcoding.Transcoding,
+			tst.Download.Handle(handler.HandleDownload),
+			tst.Transcode.Handle(handler.HandleTranscode),
+			tst.Thumbnail.Handle(handler.HandleThumbnail),
+			tst.ExtractAudio.Handle(handler.HandleExtractAudio),
+			tst.Package.Handle(handler.HandlePackage),
+		)
 
-		reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
-			clst.GenerateQuoteDoc:    docHandler,
-			clst.SendQuoteEmail:      emailHandler,
-			clst.SyncCrmQuote:        crmHandler,
-			clst.GenerateContractDoc: docHandler,
-			clst.SendContractEmail:   emailHandler,
-			clst.SyncCrmContract:     crmHandler,
-			clst.InitiateSignature:   clst.InitiateSignature.Handle(handler.HandleInitiateSignature),
-			clst.InitiatePayment:     clst.InitiatePayment.Handle(handler.HandleInitiatePayment),
-			clst.BundleContractDocs:  clst.BundleContractDocs.Handle(handler.HandleBundleContractDocs),
-			clst.CreateContract:      clst.CreateContract.Handle(handler.HandleCreateContract),
-		})
+		reg.RegisterBlueprint(contracts.QuoteLifecycle,
+			clst.GenerateQuoteDoc.Handle(handler.HandleDocument),
+			clst.SendQuoteEmail.Handle(handler.HandleEmail),
+			clst.SyncCrmQuote.Handle(handler.HandleCrm),
+			clst.GenerateContractDoc.Handle(handler.HandleDocument),
+			clst.SendContractEmail.Handle(handler.HandleEmail),
+			clst.SyncCrmContract.Handle(handler.HandleCrm),
+			clst.InitiateSignature.Handle(handler.HandleInitiateSignature),
+			clst.InitiatePayment.Handle(handler.HandleInitiatePayment),
+			clst.BundleContractDocs.Handle(handler.HandleBundleContractDocs),
+			clst.CreateContract.Handle(handler.HandleCreateContract),
+		)
 
-		reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
-			clst.GenerateContractDoc:  docHandler,
-			clst.SendContractEmail:    emailHandler,
-			clst.SyncCrmContract:      crmHandler,
-			clst.CheckContractRenewal: clst.CheckContractRenewal.Handle(handler.HandleCheckContractRenewal),
-		})
+		reg.RegisterBlueprint(contracts.ContractRenewal,
+			clst.GenerateContractDoc.Handle(handler.HandleDocument),
+			clst.SendContractEmail.Handle(handler.HandleEmail),
+			clst.SyncCrmContract.Handle(handler.HandleCrm),
+			clst.CheckContractRenewal.Handle(handler.HandleCheckContractRenewal),
+		)
 
-		reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
-			clst.ScanContractRenewals: clst.ScanContractRenewals.Handle(handler.NewScanContractRenewals(gc)),
-		})
+		reg.RegisterBlueprint(contracts.ContractRenewalScan,
+			clst.ScanContractRenewals.Handle(handler.NewScanContractRenewals(gc)),
+		)
 	}
 
 	registerTemplates := func(lr gonveyor.LaunchRegistry) {
