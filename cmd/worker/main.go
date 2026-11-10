@@ -77,6 +77,8 @@ func main() {
 			clst.SendContractEmail.Handle(handler.HandleEmail),
 			clst.SyncCrmContract.Handle(handler.HandleCrm),
 			clst.CheckContractRenewal.Handle(handler.HandleCheckContractRenewal),
+			clst.RenewContract.Handle(handler.HandleRenewContract),
+			clst.CloseContract.Handle(handler.HandleCloseContract),
 		)
 
 		reg.RegisterBlueprint(contracts.ContractRenewalScan,
