@@ -36,9 +36,7 @@ var Transcoding = gonveyor.New("transcoding",
 		}),
 )
 
-var Template = gonveyor.NewLaunchTemplate(Transcoding, func(p st.DownloadInput) []gonveyor.ManifestOption {
-	return []gonveyor.ManifestOption{st.Download.Seed(p)}
-})
+var Template = st.Download.Template(Transcoding)
 
 func Manifest(assetID, sourceURL string) (gonveyor.BlueprintManifest, error) {
 	return Template.Manifest(st.DownloadInput{AssetID: assetID, SourceURL: sourceURL})

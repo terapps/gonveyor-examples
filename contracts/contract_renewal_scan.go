@@ -13,6 +13,4 @@ import (
 
 var ContractRenewalScan = gonveyor.New("contract_renewal_scan", st.ScanContractRenewals)
 
-var ScanTemplate = gonveyor.NewLaunchTemplate(ContractRenewalScan, func(p st.ScanRenewalsInput) []gonveyor.ManifestOption {
-	return []gonveyor.ManifestOption{st.ScanContractRenewals.Seed(p)}
-})
+var ScanTemplate = st.ScanContractRenewals.Template(ContractRenewalScan)
