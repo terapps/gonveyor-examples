@@ -1,6 +1,6 @@
 module github.com/terapps/gonveyor-examples
 
-go 1.25.0
+go 1.27
 
 require (
 	github.com/lib/pq v1.12.3

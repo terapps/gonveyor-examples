@@ -5,7 +5,7 @@ package contracts
 // Indépendant de quote_lifecycle (déclenché par contract_renewal_scan, voir
 // contract_renewal_scan.go — un seul schedule récurrent, pas un par contrat), mais
 // réutilise trois stations telles quelles — GenerateContractDoc, SendContractEmail,
-// SyncCrmContract — câblées différemment ici via des Wire() distincts de ceux de
+// SyncCrmContract — câblées différemment ici via des chaînes Intake/After distinctes de celles de
 // quote_lifecycle.go.
 //
 //   CheckContractRenewal ──> GenerateContractDoc ──┬──> SendContractEmail
@@ -19,42 +19,38 @@ import (
 var ContractRenewal = gonveyor.New("contract_renewal",
 	st.CheckContractRenewal, // root — dispatched via Seed at manifest time
 
-	gonveyor.Wire(st.GenerateContractDoc,
-		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.DocumentInput) {
-			in.EntityID = o.ContractID
-		}),
-	),
+	st.GenerateContractDoc.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.DocumentInput) {
+		in.EntityID = o.ContractID
+	}),
 
-	gonveyor.Wire(st.SendContractEmail,
-		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SendEmailInput) {
+	st.SendContractEmail.
+		Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SendEmailInput) {
 			in.To = o.ClientEmail
 			in.Vars = map[string]string{"renewal_url": o.RenewalURL}
-		}),
-		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SendEmailInput) {
+		}).
+		Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SendEmailInput) {
 			in.DocURLs = []string{o.DocURL}
 		}),
-	),
 
-	gonveyor.Wire(st.SyncCrmContract,
-		gonveyor.Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SyncCrmInput) {
+	st.SyncCrmContract.
+		Intake(st.CheckContractRenewal, func(o st.CheckContractRenewalOutput, in *st.SyncCrmInput) {
 			in.EntityID = o.ContractID
-		}),
-		gonveyor.Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SyncCrmInput) {
+		}).
+		Intake(st.GenerateContractDoc, func(o st.DocumentOutput, in *st.SyncCrmInput) {
 			in.DocURLs = []string{o.DocURL}
 		}),
-	),
 )
 
 var RenewalTemplate = gonveyor.NewLaunchTemplate(ContractRenewal, func(p st.CheckContractRenewalInput) []gonveyor.ManifestOption {
 	return []gonveyor.ManifestOption{
-		gonveyor.Seed(st.CheckContractRenewal, p),
-		gonveyor.Seed(st.GenerateContractDoc, st.DocumentInput{
+		st.CheckContractRenewal.Seed(p),
+		st.GenerateContractDoc.Seed(st.DocumentInput{
 			DocType: "renewal",
 		}),
-		gonveyor.Seed(st.SendContractEmail, st.SendEmailInput{
+		st.SendContractEmail.Seed(st.SendEmailInput{
 			Template: st.TemplateContractRenewal,
 		}),
-		gonveyor.Seed(st.SyncCrmContract, st.SyncCrmInput{
+		st.SyncCrmContract.Seed(st.SyncCrmInput{
 			EntityType: "contract",
 		}),
 	}

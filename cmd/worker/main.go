@@ -11,13 +11,13 @@ import (
 	"strings"
 	"syscall"
 
+	_ "github.com/lib/pq"
 	"github.com/terapps/gonveyor"
 	"github.com/terapps/gonveyor-examples/cmd/worker/handler"
 	"github.com/terapps/gonveyor-examples/contracts"
 	clst "github.com/terapps/gonveyor-examples/contracts/stations"
 	"github.com/terapps/gonveyor-examples/transcoding"
 	tst "github.com/terapps/gonveyor-examples/transcoding/stations"
-	_ "github.com/lib/pq"
 
 	"github.com/terapps/gonveyor-examples/simple"
 )
@@ -53,15 +53,15 @@ func main() {
 
 	registerStations := func(reg gonveyor.StationRegistry) {
 		reg.RegisterBlueprint(simple.SimpleDispatch, gonveyor.Handlers{
-			simple.SendWelcome: gonveyor.Handle(simple.SendWelcome, handler.HandleWelcome),
+			simple.SendWelcome: simple.SendWelcome.Handle(handler.HandleWelcome),
 		})
 
 		reg.RegisterBlueprint(transcoding.Transcoding, gonveyor.Handlers{
-			tst.Download:     gonveyor.Handle(tst.Download, handler.HandleDownload),
-			tst.Transcode:    gonveyor.Handle(tst.Transcode, handler.HandleTranscode),
-			tst.Thumbnail:    gonveyor.Handle(tst.Thumbnail, handler.HandleThumbnail),
-			tst.ExtractAudio: gonveyor.Handle(tst.ExtractAudio, handler.HandleExtractAudio),
-			tst.Package:      gonveyor.Handle(tst.Package, handler.HandlePackage),
+			tst.Download:     tst.Download.Handle(handler.HandleDownload),
+			tst.Transcode:    tst.Transcode.Handle(handler.HandleTranscode),
+			tst.Thumbnail:    tst.Thumbnail.Handle(handler.HandleThumbnail),
+			tst.ExtractAudio: tst.ExtractAudio.Handle(handler.HandleExtractAudio),
+			tst.Package:      tst.Package.Handle(handler.HandlePackage),
 		})
 
 		reg.RegisterBlueprint(contracts.QuoteLifecycle, gonveyor.Handlers{
@@ -71,21 +71,21 @@ func main() {
 			clst.GenerateContractDoc: docHandler,
 			clst.SendContractEmail:   emailHandler,
 			clst.SyncCrmContract:     crmHandler,
-			clst.InitiateSignature:   gonveyor.Handle(clst.InitiateSignature, handler.HandleInitiateSignature),
-			clst.InitiatePayment:     gonveyor.Handle(clst.InitiatePayment, handler.HandleInitiatePayment),
-			clst.BundleContractDocs:  gonveyor.Handle(clst.BundleContractDocs, handler.HandleBundleContractDocs),
-			clst.CreateContract:      gonveyor.Handle(clst.CreateContract, handler.HandleCreateContract),
+			clst.InitiateSignature:   clst.InitiateSignature.Handle(handler.HandleInitiateSignature),
+			clst.InitiatePayment:     clst.InitiatePayment.Handle(handler.HandleInitiatePayment),
+			clst.BundleContractDocs:  clst.BundleContractDocs.Handle(handler.HandleBundleContractDocs),
+			clst.CreateContract:      clst.CreateContract.Handle(handler.HandleCreateContract),
 		})
 
 		reg.RegisterBlueprint(contracts.ContractRenewal, gonveyor.Handlers{
 			clst.GenerateContractDoc:  docHandler,
 			clst.SendContractEmail:    emailHandler,
 			clst.SyncCrmContract:      crmHandler,
-			clst.CheckContractRenewal: gonveyor.Handle(clst.CheckContractRenewal, handler.HandleCheckContractRenewal),
+			clst.CheckContractRenewal: clst.CheckContractRenewal.Handle(handler.HandleCheckContractRenewal),
 		})
 
 		reg.RegisterBlueprint(contracts.ContractRenewalScan, gonveyor.Handlers{
-			clst.ScanContractRenewals: gonveyor.Handle(clst.ScanContractRenewals, handler.NewScanContractRenewals(gc)),
+			clst.ScanContractRenewals: clst.ScanContractRenewals.Handle(handler.NewScanContractRenewals(gc)),
 		})
 	}
 

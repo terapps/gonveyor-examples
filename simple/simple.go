@@ -24,7 +24,7 @@ var SendWelcome = gonveyor.Define[WelcomeInput, WelcomeOutput]("send_welcome")
 var SimpleDispatch = gonveyor.New("simple_dispatch", SendWelcome)
 
 var Template = gonveyor.NewLaunchTemplate(SimpleDispatch, func(p WelcomeInput) []gonveyor.ManifestOption {
-	return []gonveyor.ManifestOption{gonveyor.Seed(SendWelcome, p)}
+	return []gonveyor.ManifestOption{SendWelcome.Seed(p)}
 })
 
 func Manifest(userID, email string) (gonveyor.BlueprintManifest, error) {

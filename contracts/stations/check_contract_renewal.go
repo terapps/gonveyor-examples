@@ -15,5 +15,5 @@ type CheckContractRenewalOutput struct {
 }
 
 // CheckContractRenewal is the root of the contract_renewal blueprint. SendContractEmail is
-// reused as-is from quote_lifecycle — same station, different Wire().
+// reused as-is from quote_lifecycle — same station, different wiring.
 var CheckContractRenewal = gonveyor.Define[CheckContractRenewalInput, CheckContractRenewalOutput]("check_contract_renewal")
