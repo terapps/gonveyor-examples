@@ -139,3 +139,13 @@ func HandleCloseContract(_ context.Context, in clst.CloseContractInput) (clst.Cl
 	slog.Info("closing contract", "contract_id", in.ContractID, "reason", in.Reason)
 	return clst.CloseContractOutput{}, nil
 }
+
+func HandleMarkQuoteDeclined(_ context.Context, in clst.QuoteOutcomeInput) (clst.QuoteOutcomeOutput, error) {
+	slog.Info("quote declined by client", "quote_id", in.QuoteID, "client", in.ClientEmail, "reason", in.Reason)
+	return clst.QuoteOutcomeOutput{}, nil
+}
+
+func HandleNotifyPaymentFailed(_ context.Context, in clst.QuoteOutcomeInput) (clst.QuoteOutcomeOutput, error) {
+	slog.Info("quote payment failed", "quote_id", in.QuoteID, "client", in.ClientEmail, "reason", in.Reason)
+	return clst.QuoteOutcomeOutput{}, nil
+}

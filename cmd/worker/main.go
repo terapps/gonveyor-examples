@@ -67,6 +67,8 @@ func main() {
 			clst.SendContractEmail.Handle(handler.HandleEmail),
 			clst.SyncCrmContract.Handle(handler.HandleCrm),
 			clst.InitiateSignature.Handle(handler.HandleInitiateSignature),
+			clst.MarkQuoteDeclined.Handle(handler.HandleMarkQuoteDeclined),
+			clst.NotifyPaymentFailed.Handle(handler.HandleNotifyPaymentFailed),
 			clst.InitiatePayment.Handle(handler.HandleInitiatePayment),
 			clst.BundleContractDocs.Handle(handler.HandleBundleContractDocs),
 			clst.CreateContract.Handle(handler.HandleCreateContract),
