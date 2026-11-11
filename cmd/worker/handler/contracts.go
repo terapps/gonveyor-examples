@@ -129,3 +129,13 @@ func NewScanContractRenewals(gc *gonveyor.Gonductor) func(context.Context, clst.
 		return clst.ScanRenewalsOutput{Found: len(due)}, nil
 	}
 }
+
+func HandleRenewContract(_ context.Context, in clst.RenewContractInput) (clst.RenewContractOutput, error) {
+	slog.Info("renewing contract", "contract_id", in.ContractID)
+	return clst.RenewContractOutput{ContractID: in.ContractID + "-renewed"}, nil
+}
+
+func HandleCloseContract(_ context.Context, in clst.CloseContractInput) (clst.CloseContractOutput, error) {
+	slog.Info("closing contract", "contract_id", in.ContractID, "reason", in.Reason)
+	return clst.CloseContractOutput{}, nil
+}
