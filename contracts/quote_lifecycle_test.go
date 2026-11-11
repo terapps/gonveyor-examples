@@ -59,3 +59,9 @@ func TestQuoteLifecycleTemplate_Builds(t *testing.T) {
 	assert.True(t, keys["mark_quote_declined"])
 	assert.True(t, keys["notify_payment_failed"])
 }
+
+// Each failure branch cancels the other wait, so a refused or failed quote doesn't hang.
+func TestQuoteLifecycle_FailureBranchesCancelTheOtherWait(t *testing.T) {
+	assert.Equal(t, []string{st.AwaitPayment.Key()}, QuoteLifecycle.Node("mark_quote_declined").CancelKeys())
+	assert.Equal(t, []string{st.AwaitSignature.Key()}, QuoteLifecycle.Node("notify_payment_failed").CancelKeys())
+}

@@ -47,14 +47,16 @@ var QuoteLifecycle = gonveyor.New("quote_lifecycle",
 	}),
 
 	// Refused signature or failed payment: their own branch runs, CreateContract and everything
-	// after it are skipped.
+	// after it are skipped, and the other wait is cancelled so the run ends.
 	st.MarkQuoteDeclined.
 		When(st.AwaitSignature, func(p st.SignaturePayload) bool { return p.Declined }).
-		Intake(st.AwaitSignature, func(p st.SignaturePayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }),
+		Intake(st.AwaitSignature, func(p st.SignaturePayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }).
+		Cancels(st.AwaitPayment),
 
 	st.NotifyPaymentFailed.
 		When(st.AwaitPayment, func(p st.PaymentPayload) bool { return p.Failed }).
-		Intake(st.AwaitPayment, func(p st.PaymentPayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }),
+		Intake(st.AwaitPayment, func(p st.PaymentPayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }).
+		Cancels(st.AwaitSignature),
 
 	// CreateContract waits for: email sent + crm synced + a signed quote + a successful payment
 	st.CreateContract.
