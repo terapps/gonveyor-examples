@@ -46,10 +46,21 @@ var QuoteLifecycle = gonveyor.New("quote_lifecycle",
 		in.Metadata = map[string]string{"process_id": o.ProcessID}
 	}),
 
-	// CreateContract waits for: email sent + crm synced + signature received + payment received
+	// Refused signature or failed payment: their own branch runs, CreateContract and everything
+	// after it are skipped.
+	st.MarkQuoteDeclined.
+		When(st.AwaitSignature, func(p st.SignaturePayload) bool { return p.Declined }).
+		Intake(st.AwaitSignature, func(p st.SignaturePayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }),
+
+	st.NotifyPaymentFailed.
+		When(st.AwaitPayment, func(p st.PaymentPayload) bool { return p.Failed }).
+		Intake(st.AwaitPayment, func(p st.PaymentPayload, in *st.QuoteOutcomeInput) { in.Reason = p.Reason }),
+
+	// CreateContract waits for: email sent + crm synced + a signed quote + a successful payment
 	st.CreateContract.
-		After(st.SendQuoteEmail).
-		After(st.SyncCrmQuote).
+		After(st.SendQuoteEmail, st.SyncCrmQuote).
+		When(st.AwaitSignature, func(p st.SignaturePayload) bool { return !p.Declined }).
+		When(st.AwaitPayment, func(p st.PaymentPayload) bool { return !p.Failed }).
 		Intake(st.AwaitSignature, func(p st.SignaturePayload, in *st.CreateContractInput) {
 			in.SignatureID = p.SignatureID
 		}).
@@ -103,6 +114,8 @@ var QuoteLifecycleTemplate = gonveyor.NewLaunchTemplate(QuoteLifecycle, func(p P
 			QuoteID:     p.QuoteID,
 			ClientEmail: p.ClientEmail,
 		}),
+		st.MarkQuoteDeclined.Seed(st.QuoteOutcomeInput{QuoteID: p.QuoteID, ClientEmail: p.ClientEmail}),
+		st.NotifyPaymentFailed.Seed(st.QuoteOutcomeInput{QuoteID: p.QuoteID, ClientEmail: p.ClientEmail}),
 		st.InitiatePayment.Seed(st.InitiatePaymentInput{
 			QuoteID:     p.QuoteID,
 			ClientEmail: p.ClientEmail,

@@ -5,6 +5,8 @@ import "github.com/terapps/gonveyor"
 type SignaturePayload struct {
 	SignatureID string
 	SignedAt    string
+	Declined    bool   // client refused to sign
+	Reason      string // why, when Declined
 }
 
 // AwaitSignature is a signal — no handler; completed by Gonductor.Send, not a worker.
